@@ -12,7 +12,6 @@ export default function DashboardPage() {
   const { user, isLoaded } = useUser();
   const [upcomingBookings, setUpcomingBookings] = useState([]);
   const [hostListings, setHostListings] = useState([]);
-  const [recentTransactions, setRecentTransactions] = useState([]);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
@@ -28,13 +27,6 @@ export default function DashboardPage() {
       .select('id, title, is_active')
       .eq('owner_id', user.id)
       .then(({ data }) => setHostListings(data || []));
-    // Fetch recent transactions
-    db.from('transactions')
-      .select('id, total_price, created_at, status')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(5)
-      .then(({ data }) => setRecentTransactions(data || []));
   }, [isLoaded, user]);
 
   if (!isLoaded) return <div>Loading...</div>;
@@ -138,39 +130,6 @@ export default function DashboardPage() {
                 <Button variant="outline" size="sm" className="mt-2" asChild>
                   <Link href="/listings">Find Parking</Link>
                 </Button>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>Recent Transactions</CardTitle>
-            <CardDescription>Your recent booking payments</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {recentTransactions && recentTransactions.length > 0 ? (
-              <div className="space-y-4">
-                {recentTransactions.map((transaction) => (
-                  <div
-                    key={transaction.id}
-                    className="flex justify-between items-center border-b pb-4 last:border-0 last:pb-0"
-                  >
-                    <div className="flex items-center gap-2">
-                      <CreditCard className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">${transaction.total_price?.toFixed(2)}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {new Date(transaction.created_at).toLocaleDateString()}
-                        </p>
-                      </div>
-                    </div>
-                    <span className="text-sm capitalize">{transaction.status}</span>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-6 text-muted-foreground">
-                <p>No recent transactions</p>
               </div>
             )}
           </CardContent>

@@ -1,5 +1,4 @@
 import { db } from '@/lib/supabaseClient';
-import ShowList from '@/app/components/ShowList';
 import { Dancing_Script, Abel } from 'next/font/google';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -8,16 +7,7 @@ const abel = Abel({ weight: '400', subsets: ['latin'] });
 const dancingScript = Dancing_Script({ subsets: ['latin'] });
 
 export default async function Home() {
-  const { data: shows, error } = await db.from('venues').select('*');
-
-  if (error) {
-    return <div>Error fetching venues: {error.message}</div>;
-  }
-
-  if (!shows) {
-    return <div>Loading shows...</div>;
-  }
-
+  
   return (
     <>
       <section className="relative w-screen h-screen min-h-[600px] overflow-hidden">
@@ -92,7 +82,7 @@ export default async function Home() {
       <div className="container mx-auto px-4 py-8">
         <div className="text-2xl text-blood mb-8">Upcoming Shows</div>
         <div className="w-full">
-          <ShowList shows={shows} />
+          asdf
         </div>
       </div>
     </>

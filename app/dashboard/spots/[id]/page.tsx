@@ -7,6 +7,7 @@ import { db } from '@/lib/supabaseClient';
 import { TablesUpdate } from "@/lib/supabase";
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/lib/supabase';
+import Image from "next/image";
 
 const PARKING_TYPES = ["driveway", "garage", "lot", "street"];
 
@@ -276,31 +277,31 @@ export default function EditSpotPage() {
         <div className="flex gap-2 mb-2">
           {signedImages.map((img, idx) => (
             <div key={img.id} className="relative flex flex-col items-center">
-              <img src={img.signedUrl} alt="spot" className="w-20 h-20 object-cover rounded" />
+              <Image src={img.signedUrl} alt="spot" width={80} height={80} className="object-cover rounded" />
               <button type="button" onClick={() => handleDeleteImage(img.id)} disabled={deletingImageIds.includes(img.id)} className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center">&times;</button>
               <label className="mt-1 text-xs text-white flex items-center gap-1">
-                <input
-                  type="radio"
-                  name="primary-image"
-                  checked={primaryImage === img.id}
-                  onChange={() => setPrimaryImage(img.id)}
-                />
-                Make Primary
+              <input
+                type="radio"
+                name="primary-image"
+                checked={primaryImage === img.id}
+                onChange={() => setPrimaryImage(img.id)}
+              />
+              Make Primary
               </label>
             </div>
           ))}
           {imagePreviews.map((src, idx) => (
             <div key={idx} className="relative flex flex-col items-center">
-              <img src={src} alt="preview" className="w-20 h-20 object-cover rounded" />
+              <Image src={src} alt="preview" width={80} height={80} className="object-cover rounded" />
               <button type="button" onClick={() => removeNewImage(idx)} className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center">&times;</button>
               <label className="mt-1 text-xs text-white flex items-center gap-1">
-                <input
-                  type="radio"
-                  name="primary-image"
-                  checked={primaryImage === `new-${idx}`}
-                  onChange={() => setPrimaryImage(`new-${idx}`)}
-                />
-                Make Primary
+              <input
+                type="radio"
+                name="primary-image"
+                checked={primaryImage === `new-${idx}`}
+                onChange={() => setPrimaryImage(`new-${idx}`)}
+              />
+              Make Primary
               </label>
             </div>
           ))}

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
 import { db } from '@/lib/supabaseClient';
 import { TablesInsert } from "@/lib/supabase";
+import Image from "next/image";
 
 const PARKING_TYPES = ["driveway", "garage", "lot", "street"];
 
@@ -228,7 +229,7 @@ export default function CreateSpotForm() {
         <div className="flex gap-2">
           {imagePreviews.map((src, idx) => (
             <div key={idx} className="relative">
-              <img src={src} alt="preview" className="w-20 h-20 object-cover rounded" />
+              <Image src={src} alt="preview" width={80} height={80} className="object-cover rounded" />
               <button type="button" onClick={() => removeImage(idx)} className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center">&times;</button>
             </div>
           ))}
