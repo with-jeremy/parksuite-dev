@@ -153,7 +153,7 @@ export default function ListingsFilterClient({ spots, filterOnly = false, gridOn
                 </Badge>
               </div>
               {spot.description && (
-                <div className="mt-2 text-xs text-gray-500 line-clamp-2">{spot.description}</div>
+                <div className="mt-2 text-sm text-gray-800 line-clamp-2">{spot.description}</div>
               )}
             </CardContent>
           </Card>

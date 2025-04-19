@@ -1,5 +1,6 @@
 import { Abel } from 'next/font/google';
 import Image from 'next/image';
+import Footer from "@/app/components/Footer";
 
 import {
   ClerkProvider,
@@ -34,7 +35,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${abel.className} bg-background text-foreground antialiased`}>
           <nav className="bg-background border-b border-blood">
-            <div className="max-w-6xl mx-auto w-full flex items-center justify-between py-4 px-4">
+            <div className="max-w-7xl mx-auto w-full flex items-center justify-between py-4 px-4">
               {/* Logos aligned to the left */}
               <Link href="/" className="flex items-center gap-2">
                                <Image
@@ -66,13 +67,7 @@ export default function RootLayout({
             </div>
           </nav>
           <main className="mx-auto">{children}</main>
-          <footer className="row-start-3 flex gap-6 flex-wrap items-center justify-center">
-            <div className="container mx-auto text-center px-4 py-8">
-              <p>
-                Website by Jeremy@WithJeremy.com - Copyright 2025 <Link href="/dashboard">@</Link> Red Jacks Entertainment
-              </p>
-            </div>
-          </footer>
+          <Footer /> {/* Added Footer component here */}
         </body>
       </html>
     </ClerkProvider>

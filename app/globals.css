@@ -3,21 +3,28 @@
 @tailwind utilities;
 
 :root {
-  --blood: #000;
+  --black: #000;
+  --primary: #f5576c;
+  --white: #fff;
+  --background: #fff;
+  --foreground: #000;
 }
 
 @media {
   :root {
     --background: #fff;
     --foreground: #000;
+    --primary: #f5576c;  /* Added primary color variable */
+    --white: #fff;       /* Added white color variable */
+    --black: #000;       /* Added black color variable */
   }
 }
 
 body {
-  color: var(--blood);
-  background: var(--background);
+  color: var(--black);
+  background: var(--white);
 }
 
 h1, h2, h3, p, div, a {
-  color: var(--blood);
+  color: var(--black);
 }

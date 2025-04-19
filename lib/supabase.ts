@@ -93,8 +93,8 @@ export type Database = {
       bookings: {
         Row: {
           booking_date: string
-          check_in_time: string
-          check_out_time: string
+          check_in_time: string | null
+          check_out_time: string | null
           created_at: string | null
           has_review: boolean | null
           id: string
@@ -107,8 +107,8 @@ export type Database = {
         }
         Insert: {
           booking_date: string
-          check_in_time: string
-          check_out_time: string
+          check_in_time?: string | null
+          check_out_time?: string | null
           created_at?: string | null
           has_review?: boolean | null
           id?: string
@@ -121,8 +121,8 @@ export type Database = {
         }
         Update: {
           booking_date?: string
-          check_in_time?: string
-          check_out_time?: string
+          check_in_time?: string | null
+          check_out_time?: string | null
           created_at?: string | null
           has_review?: boolean | null
           id?: string
