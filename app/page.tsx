@@ -67,7 +67,7 @@ export default async function Home() {
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                   <Button>
-                    <Link href="/listings">Find Parking</Link>
+                    <Link className="text-white" href="/listings">Find Parking</Link>
                   </Button>
                   <Button asChild
                     variant="secondary"
@@ -97,7 +97,7 @@ export default async function Home() {
                           size="wfull"
                           className="w-full"
                         >
-                          <Link href="/listings">Search Parking</Link>
+                          <Link className="text-white" href="/listings">Search Parking</Link>
                         </Button>
                       </div>
                     </div>
@@ -159,13 +159,13 @@ export default async function Home() {
                 </ul>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Button>
-                  <Link href="/host">Become a Host</Link>
+                  <Link className="text-white" href="/host">Become a Host</Link>
                 </Button>
                 <Button
                   asChild
                   variant="secondary"
->
-                    Learn More
+                >
+                    <Link href="/faq">Learn More</Link>
                 </Button>
                 </div>
               </div>
