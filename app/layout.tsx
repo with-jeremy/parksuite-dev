@@ -35,34 +35,58 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${abel.className} bg-background text-foreground antialiased`}>
           <nav className="bg-background border-b border-blood">
-            <div className="max-w-7xl mx-auto w-full flex items-center justify-between py-4 px-4">
-              {/* Logos aligned to the left */}
-              <Link href="/" className="flex items-center gap-2">
-                               <Image
-                  src="/images/logo.png"
-                  alt="ParkSuite"
-                  width={200}
-                  height={64}
-                  className="h-12 object-contain"
-                />
-              </Link>
-              {/* Centered navigation for larger screens */}
-              <nav className="hidden md:flex items-center justify-center gap-6">
-                {navLinks.map((link) => (
-                  <Link key={link.href} href={link.href} className="text-lg text-foreground font-medium hover:text-primary transition-colors">
-                    {link.label}
+            {/* Responsive nav container */}
+            <div className="max-w-7xl mx-auto w-full px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0">
+              {/* Logo + Auth row (mobile: both, sm+: only logo) */}
+              <div className="w-full flex justify-between items-center">
+                <Link href="/" className="block w-auto">
+                  <Image
+                    src="/images/logo.png"
+                    alt="ParkSuite"
+                    width={200}
+                    height={64}
+                    className="h-12 w-full max-w-xs object-contain sm:w-[200px] sm:mx-0"
+                  />
+                </Link>
+                {/* Auth segment: right on mobile, hidden on sm+ */}
+                <div className="flex items-center space-x-4 sm:hidden auth-nav text-foreground">
+                  <SignedOut>
+                    <SignInButton />
+                  </SignedOut>
+                  <SignedIn>
+                    <Link href="/dashboard" className="text-lg text-foreground font-medium hover:text-primary transition-colors">Dashboard</Link>
+                    <UserButton />
+                  </SignedIn>
+                </div>
+              </div>
+              {/* Menu + Auth row for mobile, flex-row for sm+ */}
+              <div className="relative w-full flex flex-col sm:flex-row sm:items-center sm:justify-between mt-4 sm:mt-0">
+                {/* Menu row: centered with separator on mobile, center on sm+ */}
+                <div className="flex w-full justify-center items-center gap-0 sm:justify-center sm:gap-6">
+                  <Link
+                    href={navLinks[0].href}
+                    className="text-lg text-foreground font-medium hover:text-primary transition-colors"
+                  >
+                    {navLinks[0].label}
                   </Link>
-                ))}
-              </nav>
-              {/* auth aligned to the right */}
-              <div className="auth-nav flex items-center text-foreground space-x-4">
-                <SignedOut>
-                  <SignInButton />
-                </SignedOut>
-                <SignedIn>
-                  <Link href="/dashboard" className="text-lg text-foreground font-medium hover:text-primary transition-colors">Dashboard</Link>
-                  <UserButton />
-                </SignedIn>
+                  <span className="px-2 text-muted-foreground select-none">|</span>
+                  <Link
+                    href={navLinks[1].href}
+                    className="text-lg text-foreground font-medium hover:text-primary transition-colors"
+                  >
+                    {navLinks[1].label}
+                  </Link>
+                </div>
+                {/* Auth segment: right on sm+, hidden on mobile */}
+                <div className="hidden sm:flex items-center space-x-4 sm:ml-6 auth-nav text-foreground">
+                  <SignedOut>
+                    <SignInButton />
+                  </SignedOut>
+                  <SignedIn>
+                    <Link href="/dashboard" className="text-lg text-foreground font-medium hover:text-primary transition-colors">Dashboard</Link>
+                    <UserButton />
+                  </SignedIn>
+                </div>
               </div>
             </div>
           </nav>

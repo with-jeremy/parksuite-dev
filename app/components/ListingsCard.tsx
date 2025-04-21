@@ -2,6 +2,10 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import BookingForm from "./BookingForm";
+import {
+  Dialog,
+  DialogContent,
+} from "./ui/dialog";
 
 interface ListingsCardProps {
   spot: any;
@@ -12,6 +16,8 @@ interface ListingsCardProps {
 const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImages }) => {
   const [showBooking, setShowBooking] = useState(false);
   const [uiMessage, setUiMessage] = useState<string | null>(null);
+  const [zoomOpen, setZoomOpen] = useState(false);
+  const [zoomIdx, setZoomIdx] = useState(0);
 
   const handleBookNow = () => {
     console.log('Book Now clicked');
@@ -20,23 +26,47 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImag
     setTimeout(() => setUiMessage(null), 2000);
   };
 
+  React.useEffect(() => {
+    if (!zoomOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        setZoomIdx((prev) => (prev + 1) % (signedImages.length));
+      } else if (e.key === "ArrowLeft") {
+        setZoomIdx((prev) => (prev - 1 + signedImages.length) % signedImages.length);
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [zoomOpen, signedImages.length]);
+
   return (
     <>
       <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
         <h2 className="text-2xl font-bold mb-2">{spot.title}</h2>
-        <p className="text-gray-600 mb-4">{spot.address || spot.city + ", " + spot.state}</p>
+        <p className="text-gray-600 mb-4">{spot.address + ", " + spot.city + ", " + spot.state}</p>
         <div className="mb-4 flex gap-2 overflow-x-auto">
           {signedImages && signedImages.length > 0 ? (
             signedImages.map((img, idx) =>
               img.signedUrl ? (
-                <Image
+                <button
                   key={idx}
-                  src={img.signedUrl}
-                  alt={spot.title + " image"}
-                  className={`h-32 w-48 object-cover rounded ${img.is_primary ? 'border-4 border-blue-500' : ''}`}
-                  width={192}
-                  height={128}
-                />
+                  type="button"
+                  aria-label={`View image ${idx + 1} of ${signedImages.length}`}
+                  className="focus:outline-none"
+                  onClick={() => {
+                    setZoomIdx(idx);
+                    setZoomOpen(true);
+                  }}
+                  style={{ background: "none", border: 0, padding: 0 }}
+                >
+                  <Image
+                    src={img.signedUrl}
+                    alt={spot.title + " image"}
+                    className={`h-32 w-48 object-cover rounded ${img.is_primary ? 'border-4 border-blue-500' : ''}`}
+                    width={192}
+                    height={128}
+                  />
+                </button>
               ) : null
             )
           ) : (
@@ -63,15 +93,15 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImag
         <div className="mt-6 p-4 bg-gray-50 rounded-lg border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex justify-between w-56">
-              <span className="font-medium">Price</span>
+              <span className="font-medium">Price per day:</span>
               <span>${spot.price_per_day?.toFixed(2) || '0.00'}</span>
             </div>
             <div className="flex justify-between w-56 mt-1">
-              <span className="text-sm text-gray-500">Rental Fee (3%)</span>
-              <span className="text-sm text-gray-500">${spot.price_per_day ? (spot.price_per_day * 0.03).toFixed(2) : '0.00'}</span>
+              <span className="text-sm text-gray-900">Rental Fee (3%):</span>
+              <span className="text-sm text-gray-900">${spot.price_per_day ? (spot.price_per_day * 0.03).toFixed(2) : '0.00'}</span>
             </div>
             <div className="flex justify-between w-56 mt-2 border-t pt-2 font-semibold">
-              <span>Total</span>
+              <span>Total:</span>
               <span>${spot.price_per_day ? (spot.price_per_day * 1.03).toFixed(2) : '0.00'}</span>
             </div>
           </div>
@@ -94,6 +124,45 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImag
           setTimeout(() => setUiMessage(null), 2000);
         }} />
       )}
+      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+        <DialogContent className="max-w-2xl flex flex-col items-center">
+          {signedImages && signedImages.length > 0 && (
+            <div className="relative w-full flex flex-col items-center">
+              <Image
+                src={signedImages[zoomIdx].signedUrl || ''}
+                alt={spot.title + ` zoomed image ${zoomIdx + 1}`}
+                width={600}
+                height={400}
+                className="object-contain rounded max-h-[70vh] bg-black"
+                priority
+              />
+              {signedImages.length > 1 && (
+                <div className="absolute inset-0 flex items-center justify-between pointer-events-none">
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    className="pointer-events-auto bg-white/80 hover:bg-white text-black rounded-full p-2 m-2 focus:outline-none"
+                    onClick={() => setZoomIdx((zoomIdx - 1 + signedImages.length) % signedImages.length)}
+                  >
+                    &#8592;
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    className="pointer-events-auto bg-white/80 hover:bg-white text-black rounded-full p-2 m-2 focus:outline-none"
+                    onClick={() => setZoomIdx((zoomIdx + 1) % signedImages.length)}
+                  >
+                    &#8594;
+                  </button>
+                </div>
+              )}
+              <div className="mt-2 text-sm text-gray-700">
+                Image {zoomIdx + 1} of {signedImages.length}
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </>
   );
 };

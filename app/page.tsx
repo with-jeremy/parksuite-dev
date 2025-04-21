@@ -7,6 +7,7 @@ import Link from 'next/link';
 import ListingsFilterClient from '@/app/components/ListingsFilterClient';
 import { Button } from '@/app/components/ui/button';
 import { ButtonProps } from '@/app/components/ui/button';
+import HeroSearchForm from './components/HeroSearchForm';
 
 const abel = Abel({ weight: '400', subsets: ['latin'] });
 
@@ -40,6 +41,7 @@ export default async function Home() {
       return { ...spot, signedUrl };
     })
   );
+
 
   return (
     <>
@@ -76,33 +78,8 @@ export default async function Home() {
                   </Button>
                 </div>
               </div>
-              <div className="mx-auto w-full max-w-[500px] lg:max-w-none">
-                <div className="border-none shadow-xl rounded-lg bg-white/90">
-                  <div className="p-6">
-                    <div className="space-y-4">
-                      <h3 className="text-2xl font-bold">Find your spot</h3>
-                      <div className="space-y-4 pt-4">
-                        <div className="grid gap-2">
-                          <label htmlFor="destination" className="text-sm font-medium leading-none">Address, City, State, or Zip Code</label>
-                          <input id="destination" placeholder="e.g. 123 Main St, Florence, AL, or 35630" className="w-full p-2 border rounded" />
-                        </div>
-                        <div className="grid gap-2">
-                          <label htmlFor="date" className="text-sm font-medium leading-none">Date</label>
-                          <div className="flex items-center gap-2">
-                            <span className="h-4 w-4 opacity-50 inline-block bg-gray-300 rounded" />
-                            <input id="date" type="date" className="w-full p-2 border rounded" />
-                          </div>
-                        </div>
-                        <Button
-                          size="wfull"
-                          className="w-full"
-                        >
-                          <Link className="text-white" href="/listings">Search Parking</Link>
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+              <div className="mx-auto w-full hidden lg:block max-w-[500px] lg:max-w-none">
+                <HeroSearchForm />
               </div>
             </div>
           </div>

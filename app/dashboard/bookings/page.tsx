@@ -27,22 +27,11 @@ export default function BookingsDashboard() {
           setLoading(false);
           return;
         }
-        const bookingsWithImages = await Promise.all((data || []).map(async (booking) => {
-          let signedImages = [];
-          if (booking.parking_spot?.id) {
-            const { data: images = [] } = await db
-              .from("parking_spot_images")
-              .select("signedUrl:image_url, is_primary")
-              .eq("parking_spot_id", booking.parking_spot.id);
-            signedImages = images;
-          }
-          return {
-            ...booking,
-            spot: booking.parking_spot,
-            signedImages,
-          };
+        const bookingsWithSpotInfo = (data || []).map((booking) => ({
+          ...booking,
+          spot: booking.parking_spot,
         }));
-        setBookings(bookingsWithImages);
+        setBookings(bookingsWithSpotInfo);
         setLoading(false);
       });
   }, [isLoaded, isSignedIn, user]);
@@ -52,7 +41,7 @@ export default function BookingsDashboard() {
 
   return (
     <div className="p-5 min-h-screen flex flex-col items-center">
-      <div className="w-full flex justify-between mb-5 max-w-2xl">
+      <div className="w-full flex justify-between mb-5 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold ">Your Bookings</h1>
       </div>
       {error && <div className="text-red-500 mb-4">{error}</div>}
@@ -61,9 +50,9 @@ export default function BookingsDashboard() {
       ) : bookings.length === 0 ? (
         <div className="text-white">No bookings found.</div>
       ) : (
-        <div className="w-full max-w-2xl space-y-4">
+        <div className="w-full max-w-7xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {bookings.map((booking) => (
-            <BookingsCard key={booking.id} booking={booking} signedImages={booking.signedImages} />
+            <BookingsCard key={booking.id} booking={booking} />
           ))}
         </div>
       )}

@@ -3,14 +3,22 @@ import { db } from '@/lib/supabaseClient';
 import { createClient } from '@supabase/supabase-js';
 import { Database } from '@/lib/supabase';
 import ListingsFilterClient from '../components/ListingsFilterClient';
+import { cookies } from 'next/headers';
 
 const supabaseAdmin = createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
 
 export default async function ListingsPage() {
-  // Fetch spots with their images (if any)
+  // Get search param from URL
+  const cookieStore = await cookies();
+  const cookieValue = cookieStore.get('next-url')?.value || '';
+  const queryString = cookieValue.split('?')[1] || '';
+  const searchParams = new URLSearchParams(queryString);
+  const initialSearch = searchParams.get('search') || '';
+
+  // Fetch spots with their images (if any) and amenities
   const { data: spots, error } = await db
     .from('parking_spots')
-    .select('*, parking_spot_images(image_url, is_primary)')
+    .select('*, parking_spot_images(image_url, is_primary), parking_spot_amenities(amenities(id, name))')
     .eq('is_active', true);
 
   if (error) {
@@ -32,24 +40,15 @@ export default async function ListingsPage() {
           .createSignedUrl(imagePath.replace(/^.*parking-spot-images\//, ''), 60 * 60); // 1 hour expiry
         signedUrl = data?.signedUrl || null;
       }
-      return { ...spot, signedUrl };
+      // Extract amenities as array of { id, name }
+      const amenities = (spot.parking_spot_amenities || [])
+        .map((a: any) => a.amenities)
+        .filter(Boolean);
+      return { ...spot, signedUrl, amenities };
     })
   );
 
   return (
-    <div className="flex h-[calc(100vh-64px)] w-full">
-      {/* Sidebar */}
-      <div className="w-80 min-w-[240px] max-w-xs bg-white border-r border-gray-200 p-4 overflow-y-auto hidden md:block">
-        <h2 className="text-xl font-semibold mb-4">Filters</h2>
-        {/* Render only the filter UI from ListingsFilterClient if possible */}
-        <ListingsFilterClient spots={spotsWithSignedUrls} filterOnly />
-      </div>
-      {/* Main content */}
-      <div className="flex-1 overflow-y-auto p-4">
-        <h1 className="text-3xl font-bold mb-8">Available Parking Spots</h1>
-        {/* Render only the grid from ListingsFilterClient if possible */}
-        <ListingsFilterClient spots={spotsWithSignedUrls} gridOnly />
-      </div>
-    </div>
+    <ListingsFilterClient spots={spotsWithSignedUrls} initialSearch={initialSearch} />
   );
 }

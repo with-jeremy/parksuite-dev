@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/ta
 import { Label } from "@/app/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select"
 import { Checkbox } from "@/app/components/ui/checkbox"
-import { MainNav } from "@/app/components/main-nav"
 
 export default function HostPage() {
   return (
@@ -29,15 +28,15 @@ export default function HostPage() {
                   </p>
                 </div>
                 <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                  <a
-                    href="#get-started"
-                    className="inline-flex h-10 items-center justify-center rounded-md bg-primary px-8 text-sm font-medium text-primary-foreground shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
-                  >
+                    <Link
+                    href="/dashboard/spots/create"
+                    className="inline-flex text-white h-10 items-center justify-center rounded-md bg-primary px-8 text-lg font-semibold shadow transition-colors hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    >
                     Get Started
-                  </a>
+                    </Link>
                   <Link
                     href="/host-faq"
-                    className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-sm font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
+                    className="inline-flex h-10 items-center justify-center rounded-md border border-input bg-background px-8 text-lg font-medium shadow-sm transition-colors hover:bg-accent hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50"
                   >
                     Learn More
                   </Link>
@@ -236,246 +235,15 @@ export default function HostPage() {
                 </p>
               </div>
             </div>
-            <div className="mx-auto max-w-3xl py-12">
-              <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-3">
-                  <TabsTrigger value="basic">Basic Info</TabsTrigger>
-                  <TabsTrigger value="details">Details</TabsTrigger>
-                  <TabsTrigger value="pricing">Pricing</TabsTrigger>
-                </TabsList>
-                <TabsContent value="basic" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="title">Listing Title</Label>
-                    <Input id="title" placeholder="e.g. Private Driveway Near AT&T Stadium" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="address">Address</Label>
-                    <Input id="address" placeholder="Street Address" />
-                  </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="city">City</Label>
-                      <Input id="city" placeholder="City" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="state">State</Label>
-                      <Input id="state" placeholder="State" />
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                    <div className="space-y-2">
-                      <Label htmlFor="zip">ZIP Code</Label>
-                      <Input id="zip" placeholder="ZIP Code" />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="venue">Nearest Venue</Label>
-                      <Select>
-                        <SelectTrigger id="venue">
-                          <SelectValue placeholder="Select a venue" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="att">AT&T Stadium</SelectItem>
-                          <SelectItem value="sofi">SoFi Stadium</SelectItem>
-                          <SelectItem value="bryant">Bryant-Denny Stadium</SelectItem>
-                          <SelectItem value="msg">Madison Square Garden</SelectItem>
-                          <SelectItem value="crypto">Crypto.com Arena</SelectItem>
-                          <SelectItem value="ohio">Ohio Stadium</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button>
-                      Continue <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </TabsContent>
-                <TabsContent value="details" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="description">Description</Label>
-                    <Textarea id="description" placeholder="Describe your parking space..." className="min-h-[120px]" />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="type">Parking Type</Label>
-                    <Select>
-                      <SelectTrigger id="type">
-                        <SelectValue placeholder="Select parking type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="driveway">Driveway</SelectItem>
-                        <SelectItem value="garage">Garage</SelectItem>
-                        <SelectItem value="lot">Parking Lot</SelectItem>
-                        <SelectItem value="street">Street Parking</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Features</Label>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="tailgating" />
-                        <label
-                          htmlFor="tailgating"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Tailgating Allowed
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="covered" />
-                        <label
-                          htmlFor="covered"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Covered Parking
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="security" />
-                        <label
-                          htmlFor="security"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Security
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="shuttle" />
-                        <label
-                          htmlFor="shuttle"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Shuttle Service
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="ev" />
-                        <label
-                          htmlFor="ev"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          EV Charging
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="inout" />
-                        <label
-                          htmlFor="inout"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          In/Out Privileges
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Photos</Label>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                      <div className="flex h-32 items-center justify-center rounded-md border border-dashed">
-                        <Button variant="ghost">Upload Photo</Button>
-                      </div>
-                      <div className="flex h-32 items-center justify-center rounded-md border border-dashed">
-                        <Button variant="ghost">Upload Photo</Button>
-                      </div>
-                      <div className="flex h-32 items-center justify-center rounded-md border border-dashed">
-                        <Button variant="ghost">Upload Photo</Button>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button>
-                      Continue <ChevronRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </TabsContent>
-                <TabsContent value="pricing" className="space-y-4 pt-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Price per Day</Label>
-                    <div className="relative">
-                      <span className="absolute left-3 top-2.5 text-muted-foreground">$</span>
-                      <Input id="price" type="number" placeholder="45" className="pl-7" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Availability</Label>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="start">Check-in Time</Label>
-                        <Input id="start" type="time" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="end">Check-out Time</Label>
-                        <Input id="end" type="time" />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>Available for Events</Label>
-                    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="football" />
-                        <label
-                          htmlFor="football"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Football Games
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="basketball" />
-                        <label
-                          htmlFor="basketball"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Basketball Games
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="concerts" />
-                        <label
-                          htmlFor="concerts"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Concerts
-                        </label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox id="conventions" />
-                        <label
-                          htmlFor="conventions"
-                          className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
-                        >
-                          Conventions
-                        </label>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="pt-4">
-                    <Card className="bg-muted">
-                      <CardContent className="p-4">
-                        <div className="space-y-2">
-                          <h3 className="font-semibold">Estimated Earnings</h3>
-                          <div className="flex items-center justify-between">
-                            <span>Price per day</span>
-                            <span>$45.00</span>
-                          </div>
-                          <div className="flex items-center justify-between">
-                            <span>Service fee (15%)</span>
-                            <span>-$6.75</span>
-                          </div>
-                          <div className="flex items-center justify-between font-semibold">
-                            <span>You earn</span>
-                            <span>$38.25</span>
-                          </div>
-                        </div>
-                      </CardContent>
-                    </Card>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button>Create Listing</Button>
-                  </div>
-                </TabsContent>
-              </Tabs>
+            <div className="mx-auto max-w-3xl py-12 flex justify-center">
+              <Button
+                className="text-lg px-8 py-4"
+                asChild
+              >
+                <Link href="/dashboard/spots/create">
+                  Get Started
+                </Link>
+              </Button>
             </div>
           </div>
         </section>
