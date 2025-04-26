@@ -71,14 +71,7 @@ export default function SpotsDashboard() {
                 <Button asChild variant="outline" size="sm">
                   <Link href={`/dashboard/spots/${spot.id}`}>Edit</Link>
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  onClick={() => handleDelete(spot.id)}
-                  disabled={deletingId === spot.id}
-                >
-                  {deletingId === spot.id ? "Deleting..." : "Delete"}
-                </Button>
+                
               </CardFooter>
             </Card>
           ))}
