@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { db } from '@/utils/supabase/client';
 import { Calendar, Car, MapPin, CreditCard } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '../components/ui/card';
-import { Button } from '../components/ui/button';
+import { Button } from '@/app/components/ui/button';
 import Link from 'next/link';
 
 export default function DashboardPage() {
@@ -81,12 +81,10 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-muted-foreground">Search for parking spots near your destination</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="ghost" size="sm" className="w-full" asChild>
+            <Button className="w-full mt-4" asChild>
               <Link href="/listings">Browse Listings</Link>
             </Button>
-          </CardFooter>
+          </CardContent>
         </Card>
         {/* Upcoming Bookings Card (2nd) */}
         <Card>
@@ -99,19 +97,20 @@ export default function DashboardPage() {
               <div className="flex flex-col items-center flex-1">
                 <div className="text-2xl font-bold">{upcomingRentalBookings?.length || 0}</div>
                 <p className="text-xs text-muted-foreground">Rental Bookings</p>
+                <Button size="sm" className="mt-4" asChild>
+              <Link href="/dashboard/bookings">View All</Link>
+            </Button>
               </div>
               <div className="flex flex-col items-center flex-1 border-l pl-6">
                 <div className="text-2xl font-bold">
                   {upcomingHostedBookings?.length || 0}</div>
                 <p className="text-xs text-muted-foreground">Hosted Bookings</p>
+                <Button size="sm" className="mt-4" asChild>
+              <Link href="/dashboard/bookings">View All</Link>
+            </Button>
               </div>
             </div>
           </CardContent>
-          <CardFooter>
-            <Button variant="ghost" size="sm" className="w-full" asChild>
-              <Link href="/dashboard/bookings">View All</Link>
-            </Button>
-          </CardFooter>
         </Card>
         {/* Become a Host/Your Listings Card (3rd) */}
         {hostListings && hostListings.length > 0 ? (
@@ -131,12 +130,10 @@ export default function DashboardPage() {
                   <p className="text-xs text-muted-foreground text-center">All-Time Bookings</p>
                 </div>
               </div>
-            </CardContent>
-            <CardFooter>
-              <Button variant="ghost" size="sm" className="w-full" asChild>
+              <Button size="sm" className="mt-4 w-full" asChild>
                 <Link href="/dashboard/spots">Host Dashboard</Link>
               </Button>
-            </CardFooter>
+            </CardContent>
           </Card>
         ) : (
           <Card>
@@ -146,12 +143,10 @@ export default function DashboardPage() {
             </CardHeader>
             <CardContent>
               <p className="text-sm text-muted-foreground">Earn money by renting out your parking space</p>
-            </CardContent>
-            <CardFooter>
-              <Button variant="ghost" size="sm" className="w-full" asChild>
+              <Button size="sm" className="mt-4 w-full" asChild>
                 <Link href="/host">Learn More</Link>
               </Button>
-            </CardFooter>
+            </CardContent>
           </Card>
         )}
         {/* Host Earnings Card (4th, always shown) */}
@@ -163,12 +158,10 @@ export default function DashboardPage() {
           <CardContent>
             <div className="text-2xl font-bold">${hostEarnings.toFixed(2)}</div>
             <p className="text-xs text-muted-foreground">Available Now</p>
-          </CardContent>
-          <CardFooter>
-            <Button variant="ghost" size="sm" className="w-full" asChild>
+            <Button size="sm" className="w-full mt-4" asChild>
               <Link href="/dashboard/earnings">View Earnings Details</Link>
             </Button>
-          </CardFooter>
+          </CardContent>
         </Card>
       </div>
       <div className="grid gap-6 mt-8 md:grid-cols-2 w-full max-w-6xl">
