@@ -9,7 +9,7 @@ export default async function RentedBookingsDetail({ params }) {
   // Fetch parking spot details
   const { data: booking, error: bookingError } = await db
     .from("bookings")
-    .select('id, booking_date, parking_spots (id, title, city, state, description, price_per_day, owner_id)')
+    .select('id, booking_date, parking_spots (id, title, address, city, state, description, price_per_day, owner_id)')
     .eq("id", id)
     .single();
 

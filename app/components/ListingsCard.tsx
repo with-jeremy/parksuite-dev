@@ -2,10 +2,12 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import BookingForm from "./BookingForm";
+import { Button } from '@/app/components/ui/button';
 import {
   Dialog,
   DialogContent,
 } from "./ui/dialog";
+import Link from 'next/link';
 
 interface ListingsCardProps {
   spot: any;
@@ -105,6 +107,9 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImag
               <span>${spot.price_per_day ? (spot.price_per_day * 1.03).toFixed(2) : '0.00'}</span>
             </div>
           </div>
+          <Button>
+            <Link href={`/dashboard/reviews/${spot.owner_id}`} className="text-white font-bold">See Host's Reviews</Link>
+          </Button>
           <button
             className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow mt-4 md:mt-0"
             onClick={handleBookNow}

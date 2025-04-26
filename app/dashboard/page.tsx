@@ -162,7 +162,7 @@ export default function DashboardPage() {
         {/* Upcoming Bookings (left) */}
         <Card>
           <CardHeader>
-            <CardTitle>Upcoming Parking</CardTitle>
+            <CardTitle>Upcoming Parking Reservations</CardTitle>
             <CardDescription>
               <div className="text-sm text-muted-foreground">Your next parking spots!</div>
               <Button>
@@ -265,7 +265,6 @@ export default function DashboardPage() {
             )}
           </CardContent>
         </Card>
-        )}
       </div>
     </div>
   );

@@ -127,7 +127,6 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ bookingId }) => {
             value={rating}
             onValueChange={val => setRating(val)}
             className="flex gap-1"
-            required
           >
             {[1, 2, 3, 4, 5].map((val) => (
               <ToggleGroupItem

@@ -25,7 +25,7 @@ import {
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/app/components/ui/card";
 import { CreditCard, PiggyBank, CalendarCheck, Banknote } from "lucide-react";
 
-const TODAY = new Date("2025-04-21"); // For demo/fixed date
+const TODAY = new Date(); // Use current date
 
 export default function EarningsPage() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -185,7 +185,7 @@ export default function EarningsPage() {
             <CreditCard className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-base font-semibold mb-2">Fake Account Name</div>
+            <div className="text-base font-semibold mb-2">Your Account Name</div>
             <Button asChild variant="outline" size="sm" className="w-full">
               <a href="#">Edit Payment Methods</a>
             </Button>

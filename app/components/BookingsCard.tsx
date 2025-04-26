@@ -27,9 +27,10 @@ export type BookingsCardProps = {
   };
   signedImages?: { signedUrl: string | null; is_primary: boolean | null }[];
   detailView?: boolean;
+  isHost?: boolean;
 };
 
-const BookingsCard: React.FC<BookingsCardProps> = ({ booking, signedImages, detailView }) => {
+const BookingsCard: React.FC<BookingsCardProps> = ({ booking, signedImages, detailView, isHost }) => {
   const { spot } = booking;
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomIdx, setZoomIdx] = useState(0);

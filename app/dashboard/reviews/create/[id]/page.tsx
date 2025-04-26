@@ -2,13 +2,11 @@ import { currentUser } from '@clerk/nextjs/server';
 import { redirect } from 'next/navigation';
 import ReviewForm from '@/app/components/ReviewForm';
 
-interface Props {
-  params: { id: string };
-}
 
-export default async function CreateReviewPage({ params }: Props) {
+
+export default async function CreateReviewPage({ params }) {
   const user = await currentUser();
-  const bookingId = await params.id;
+  const bookingId = await params;
   if (!user) return redirect('/dashboard');
 
   return (
