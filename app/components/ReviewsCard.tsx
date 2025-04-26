@@ -48,7 +48,7 @@ export default async function ReviewsCard({ userId }: ReviewsCardProps) {
 
   return (
     <div className="space-y-8">
-      <h2 className="text-2xl font-semibold mb-4">Reviews for {userId}</h2>
+      <h2 className="text-2xl font-semibold mb-4">Reviews for {clerkUser?.firstName || 'User'}</h2>
       <ReviewsSummary userId={userId} />
       {asHost.length > 0 && (
         <section>

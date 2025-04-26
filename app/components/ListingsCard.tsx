@@ -8,6 +8,8 @@ import {
   DialogContent,
 } from "./ui/dialog";
 import Link from 'next/link';
+import { useUser } from "@clerk/nextjs";
+import { useRouter } from "next/navigation";
 
 interface ListingsCardProps {
   spot: any;
@@ -20,9 +22,21 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImag
   const [uiMessage, setUiMessage] = useState<string | null>(null);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomIdx, setZoomIdx] = useState(0);
+  const { isSignedIn, user } = useUser();
+  const router = useRouter();
 
   const handleBookNow = () => {
     console.log('Book Now clicked');
+    
+    // Check if user is signed in
+    if (!isSignedIn) {
+      setUiMessage('Please sign in to book this spot');
+      setTimeout(() => {
+        router.push('/sign-in');
+      }, 1500);
+      return;
+    }
+    
     setUiMessage('Opening booking modal...');
     setShowBooking(true);
     setTimeout(() => setUiMessage(null), 2000);

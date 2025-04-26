@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { db } from "@/utils/supabase/client";
+import { useSupabaseClient } from "@/utils/supabase/client";
 import { TablesInsert } from "@/types/supabase";
 import {
   Table,
@@ -29,6 +29,7 @@ const TODAY = new Date(); // Use current date
 
 export default function EarningsPage() {
   const { isLoaded, isSignedIn, user } = useUser();
+  const { getSupabaseClient } = useSupabaseClient();
   const [bookings, setBookings] = useState<any[]>([]);
   const [payments, setPayments] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -37,90 +38,129 @@ export default function EarningsPage() {
   const [withdrawingId, setWithdrawingId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!isLoaded || !isSignedIn || !user) return;
-    setLoading(true);
-    // 1. Get all spots owned by user
-    db.from("parking_spots")
-      .select("id, title")
-      .eq("owner_id", user.id)
-      .then(async ({ data: spots, error: spotError }) => {
+    async function fetchData() {
+      if (!isLoaded || !isSignedIn || !user) return;
+
+      try {
+        setLoading(true);
+
+        // Get authenticated client with Clerk token
+        const supabase = await getSupabaseClient();
+
+        // 1. Get all spots owned by user
+        const { data: spots, error: spotError } = await supabase
+          .from("parking_spots")
+          .select("id, title")
+          .eq("owner_id", user.id);
+
         if (spotError) {
           setError(spotError.message);
           setLoading(false);
           return;
         }
+
         if (!spots || spots.length === 0) {
           setBookings([]);
           setLoading(false);
           return;
         }
+
         const spotIds = spots.map((s: any) => s.id);
+
         // 2. Get all bookings for these spots
-        db.from("bookings")
+        const { data: bookingsData, error: bookingsError } = await supabase
+          .from("bookings")
           .select("id, booking_date, price_per_day, service_fee, status, parking_spot_id, parking_spots(title)")
           .in("parking_spot_id", spotIds)
-          .order("booking_date", { ascending: true })
-          .then(async ({ data: bookingsData, error: bookingsError }) => {
-            if (bookingsError) {
-              setError(bookingsError.message);
-              setLoading(false);
-              return;
-            }
-            const bookingsList = (bookingsData || []).map((b: any) => ({
-              ...b,
-              spot: b.parking_spots || spots.find((s: any) => s.id === b.parking_spot_id) || {},
-            }));
-            setBookings(bookingsList);
-            // 3. Fetch earnings_payments for these bookings
-            const bookingIds = bookingsList.map((b: any) => b.id);
-            if (bookingIds.length > 0) {
-              const { data: paymentsData, error: paymentsError } = await db
-                .from("earnings_payments")
-                .select("id, booking_id, status")
-                .in("booking_id", bookingIds)
-                .eq("status", "completed");
-              if (!paymentsError && paymentsData) {
-                // Map by booking_id for quick lookup
-                const map: Record<string, any> = {};
-                paymentsData.forEach((p: any) => {
-                  if (p.booking_id) map[p.booking_id] = p;
-                });
-                setPayments(map);
-              }
-            }
-            setLoading(false);
-          });
-      });
-  }, [isLoaded, isSignedIn, user]);
+          .order("booking_date", { ascending: true });
+
+        if (bookingsError) {
+          setError(bookingsError.message);
+          setLoading(false);
+          return;
+        }
+
+        const bookingsList = (bookingsData || []).map((b: any) => ({
+          ...b,
+          spot: b.parking_spots || spots.find((s: any) => s.id === b.parking_spot_id) || {},
+        }));
+
+        setBookings(bookingsList);
+
+        // 3. Fetch earnings_payments for these bookings
+        const bookingIds = bookingsList.map((b: any) => b.id);
+
+        if (bookingIds.length > 0) {
+          const { data: paymentsData, error: paymentsError } = await supabase
+            .from("earnings_payments")
+            .select("id, booking_id, status")
+            .in("booking_id", bookingIds)
+            .eq("status", "completed");
+
+          if (!paymentsError && paymentsData) {
+            // Map by booking_id for quick lookup
+            const map: Record<string, any> = {};
+            paymentsData.forEach((p: any) => {
+              if (p.booking_id) map[p.booking_id] = p;
+            });
+            setPayments(map);
+          }
+        }
+
+        setLoading(false);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setLoading(false);
+      }
+    }
+
+    fetchData();
+  }, [isLoaded, isSignedIn, user, getSupabaseClient]);
 
   const handleWithdraw = (booking: any) => {
     setModalBooking(booking);
   };
 
   const confirmWithdraw = async () => {
-    if (!modalBooking) return;
-    setWithdrawingId(modalBooking.id);
-    // Simulate payment confirmation and create earnings_payment record
-    const earnings = (modalBooking.price_per_day || 0) - (modalBooking.service_fee || 0);
-    const payment: TablesInsert<"earnings_payments"> = {
-      amount: earnings,
-      booking_id: modalBooking.id,
-      user_id: user.id,
-      status: "completed",
-    };
-    const { error: insertError } = await db.from("earnings_payments").insert([payment]);
-    if (!insertError) {
-      setPayments((prev) => ({ ...prev, [modalBooking.id]: { ...payment, status: "completed" } }));
+    if (!modalBooking || !user) return;
+
+    try {
+      setWithdrawingId(modalBooking.id);
+
+      // Get authenticated client
+      const supabase = await getSupabaseClient();
+
+      // Simulate payment confirmation and create earnings_payment record
+      const earnings = (modalBooking.price_per_day || 0) - (modalBooking.service_fee || 0);
+      const payment: TablesInsert<"earnings_payments"> = {
+        amount: earnings,
+        booking_id: modalBooking.id,
+        user_id: user.id,
+        status: "completed",
+      };
+
+      const { error: insertError } = await supabase.from("earnings_payments").insert([payment]);
+
+      if (!insertError) {
+        setPayments((prev) => ({ ...prev, [modalBooking.id]: { ...payment, status: "completed" } }));
+      } else {
+        setError(insertError.message);
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to process withdrawal");
+    } finally {
+      setWithdrawingId(null);
+      setModalBooking(null);
     }
-    setWithdrawingId(null);
-    setModalBooking(null);
-    // Optionally show a toast/notification here
   };
 
   // --- Earnings summary calculations ---
-  let pendingCount = 0, pendingTotal = 0;
-  let availableCount = 0, availableTotal = 0;
-  let paidCount = 0, paidTotal = 0;
+  let pendingCount = 0,
+    pendingTotal = 0;
+  let availableCount = 0,
+    availableTotal = 0;
+  let paidCount = 0,
+    paidTotal = 0;
   bookings.forEach((booking) => {
     const bookingDate = new Date(booking.booking_date);
     const earnings = (booking.price_per_day || 0) - (booking.service_fee || 0);
@@ -193,7 +233,7 @@ export default function EarningsPage() {
         </Card>
       </div>
       {/* Table aligned to columns 2-4 */}
-      <div className="grid w-full max-w-7xl" style={{ gridTemplateColumns: 'repeat(4, minmax(0, 1fr))' }}>
+      <div className="grid w-full max-w-7xl" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
         <div />
         <div className="col-span-3">
           <div className="rounded-lg bg-white shadow border overflow-x-auto">
@@ -233,7 +273,9 @@ export default function EarningsPage() {
                           </TableCell>
                           <TableCell>
                             {paid ? (
-                              <Button size="sm" disabled variant="outline">Paid</Button>
+                              <Button size="sm" disabled variant="outline">
+                                Paid
+                              </Button>
                             ) : (
                               <Button
                                 size="sm"

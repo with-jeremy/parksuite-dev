@@ -1,4 +1,4 @@
-import { db } from '@/utils/supabase/client';
+import { getServerDb } from '@/utils/supabase/server';
 import { Abel } from 'next/font/google';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -10,6 +10,9 @@ import HeroSearchForm from './components/HeroSearchForm';
 const abel = Abel({ weight: '400', subsets: ['latin'] });
 
 export default async function Home() {
+  // Get authenticated DB client
+  const db = await getServerDb();
+  
   // Fetch spots with their images (if any)
   const { data: spots, error } = await db
     .from('parking_spots')

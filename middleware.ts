@@ -1,14 +1,23 @@
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 
+// Define route matchers
 const isAdminRoute = createRouteMatcher(['/admin(.*)']);
 const isDashboardRoute = createRouteMatcher(['/dashboard(.*)']);
+const isPublicRoute = createRouteMatcher(['/', '/(auth)/(.*)', '/(marketing)/(.*)']);
 
 export default clerkMiddleware(async (auth, req) => {
+  const authObj = await auth();
+  
+  // Allow access to public routes without authentication
+  if (isPublicRoute(req)) {
+    return NextResponse.next();
+  }
+  
   // Require authentication for /dashboard routes
   if (isDashboardRoute(req)) {
-    if (!(await auth()).userId) {
-      const url = new URL('/', req.url);
+    if (!authObj.userId) {
+      const url = new URL('/sign-in', req.url);
       return NextResponse.redirect(url);
     }
     // Allow any signed-in user
@@ -16,10 +25,25 @@ export default clerkMiddleware(async (auth, req) => {
   }
 
   // Protect all routes starting with `/admin`
-  if (isAdminRoute(req) && (await auth()).sessionClaims?.metadata?.role !== 'admin') {
-    const url = new URL('/', req.url);
-    return NextResponse.redirect(url);
+  if (isAdminRoute(req)) {
+    // Check if user is authenticated
+    if (!authObj.userId) {
+      const url = new URL('/sign-in', req.url);
+      return NextResponse.redirect(url);
+    }
+    
+    // Check if user is an admin
+    if (!(authObj.sessionClaims?.metadata?.role === 'admin')) {
+      const url = new URL('/', req.url);
+      return NextResponse.redirect(url);
+    }
+    
+    // User is authenticated and has admin role
+    return NextResponse.next();
   }
+  
+  // Default: allow access
+  return NextResponse.next();
 });
 
 export const config = {

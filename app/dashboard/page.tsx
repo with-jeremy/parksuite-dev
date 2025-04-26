@@ -71,7 +71,8 @@ export default function DashboardPage() {
 
   return (
     <div className="p-5 min-h-screen flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-5">User Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-2">User Dashboard</h1>
+      <h2 className="text-xl font-medium mb-5 text-gray-600">Hello, {user.firstName}</h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl">
         {/* Find Parking Card (1st) */}
         <Card>

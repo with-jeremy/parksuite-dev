@@ -4,7 +4,6 @@ import Footer from "@/app/components/Footer";
 
 import {
   ClerkProvider,
-  SignInButton,
   SignedIn,
   SignedOut,
   UserButton,
@@ -57,7 +56,7 @@ export default function RootLayout({
                 {/* Auth segment: right on mobile, hidden on sm+ */}
                 <div className="flex items-center space-x-4 sm:hidden auth-nav text-foreground">
                   <SignedOut>
-                    <SignInButton />
+                    <Link href="/sign-in" className="text-lg text-foreground font-medium hover:text-primary transition-colors">Sign In</Link>
                   </SignedOut>
                   <SignedIn>
                     <Link href="/dashboard" className="text-lg text-foreground font-medium hover:text-primary transition-colors">Dashboard</Link>
@@ -86,7 +85,7 @@ export default function RootLayout({
                 {/* Auth segment: right on sm+, hidden on mobile */}
                 <div className="hidden sm:flex items-center space-x-4 sm:ml-6 auth-nav text-foreground">
                   <SignedOut>
-                    <SignInButton />
+                  <Link href="/sign-in" className="text-lg text-foreground font-medium hover:text-primary transition-colors">Sign In</Link>
                   </SignedOut>
                   <SignedIn>
                     <Link href="/dashboard" className="text-lg text-foreground font-medium hover:text-primary transition-colors">Dashboard</Link>
