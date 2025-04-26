@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { db } from '@/lib/supabaseClient';
+import { db } from '@/utils/supabase/client';
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";

@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { db } from "@/lib/supabaseClient";
-import { TablesInsert } from "@/lib/supabase";
+import { db } from "@/utils/supabase/client";
+import { TablesInsert } from "@/types/supabase";
 import {
   Table,
   TableHeader,

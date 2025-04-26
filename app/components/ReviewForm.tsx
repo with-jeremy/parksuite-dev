@@ -6,9 +6,25 @@ import { Textarea } from './ui/textarea';
 import { ToggleGroup, ToggleGroupItem } from './ui/toggle-group';
 import { Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { db } from '@/lib/supabaseClient';
+import { db } from '@/utils/supabase/client';
 import { useUser } from '@clerk/nextjs';
 import { Table, TableBody, TableCell, TableRow } from './ui/table';
+
+// Add Indicator component for debug table
+const Indicator = ({ ok }: { ok: boolean }) => (
+  <span
+    style={{
+      display: 'inline-block',
+      width: 10,
+      height: 10,
+      borderRadius: '50%',
+      background: ok ? '#22c55e' : '#ef4444',
+      marginRight: 6,
+      verticalAlign: 'middle',
+    }}
+    title={ok ? 'OK' : 'Missing/Invalid'}
+  />
+);
 
 interface ReviewFormProps {
   bookingId: string;
@@ -81,37 +97,25 @@ const ReviewForm: React.FC<ReviewFormProps> = ({ bookingId }) => {
       toast({ title: 'Review submitted', description: 'Thank you for your feedback!' });
       setRating('');
       setComment('');
-      router.replace('/dashboard');
+      setTimeout(() => {
+        router.replace('/dashboard');
+      }, 1200); // Delay redirect so user sees confirmation
     }
   };
 
-  if (loading || !isLoaded) return <div className="p-8 text-center">Loading...</div>;
+  if (loading || !isLoaded) return <div className="p-8 text-center">1Loading...</div>;
   if (!role) return null;
 
-  // --- TEMP: Review Insert Debug Table ---
-  // Helper for indicator
-  const Indicator = ({ ok }: { ok: boolean }) => (
-    <span style={{ display: 'inline-block', width: 16, height: 16, borderRadius: 8, background: ok ? '#22c55e' : '#ef4444', marginRight: 8, border: '1px solid #888' }} />
-  );
-  // Check if all required fields are present/valid
-  const canInsert = !!(
-    bookingId && booking && user?.id && role && rating && Number(rating) >= 1 && Number(rating) <= 5 && comment
-  );
-
-  // Render booking object as readable JSON
-  const bookingDisplay = booking ? (
-    <pre className="text-xs bg-gray-100 rounded p-2 max-w-xs overflow-x-auto">{JSON.stringify(booking, null, 2)}</pre>
-  ) : <span className="italic text-gray-400">Not loaded</span>;
-
-  // Table rows config
+  // Add debugRows and canInsert for debug table
   const debugRows = [
-    { label: 'review.booking_id', value: bookingId, ok: !!bookingId },
-    { label: 'booking (object)', value: bookingDisplay, ok: !!booking },
-    { label: 'review.user_id', value: user?.id, ok: !!user?.id },
-    { label: 'role', value: role, ok: !!role },
-    { label: 'review.rating', value: rating, ok: !!rating && Number(rating) >= 1 && Number(rating) <= 5 },
-    { label: 'review.comment', value: comment, ok: !!comment },
+    { label: 'Booking ID', value: bookingId, ok: !!bookingId },
+    { label: 'User ID', value: user?.id, ok: !!user?.id },
+    { label: 'Role', value: role, ok: !!role },
+    { label: 'Rating', value: rating, ok: !!rating && Number(rating) >= 1 && Number(rating) <= 5 },
+    { label: 'Comment', value: comment, ok: !!comment },
+    { label: 'Booking Loaded', value: booking ? 'Yes' : 'No', ok: !!booking },
   ];
+  const canInsert = !!bookingId && !!user?.id && !!role && !!rating && !!comment && !!booking;
 
   return (
     <>

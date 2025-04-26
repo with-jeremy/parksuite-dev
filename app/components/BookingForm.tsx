@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { Dialog, DialogContent } from "./ui/dialog";
 import { Button } from "./ui/button";
-import { db } from "@/lib/supabaseClient";
+import { db } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { DayPicker } from "react-day-picker";
 import "react-day-picker/dist/style.css";

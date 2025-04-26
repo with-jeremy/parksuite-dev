@@ -1,4 +1,4 @@
-import { db } from "@/lib/supabaseClient";
+import { db } from '@/utils/supabase/client';
 import { currentUser } from "@clerk/nextjs/server";
 import ReviewsSummary from "./ReviewsSummary";
 import { ToggleGroup, ToggleGroupItem } from "./ui/toggle-group";
@@ -49,10 +49,10 @@ export default async function ReviewsCard({ userId }: ReviewsCardProps) {
   return (
     <div className="space-y-8">
       <h2 className="text-2xl font-semibold mb-4">Reviews for {userId}</h2>
+      <ReviewsSummary userId={userId} />
       {asHost.length > 0 && (
         <section>
           <h3 className="font-semibold text-lg mb-2">As Host</h3>
-          <ReviewsSummary userId={userId} />
           <ul className="mt-4 space-y-4 bg-white/70 rounded-xs shadow-sm p-4 border border-neutral-300">
             {asHost.map((r) => (
               <>
@@ -80,7 +80,6 @@ export default async function ReviewsCard({ userId }: ReviewsCardProps) {
       {asRenter.length > 0 && (
         <section>
           <h3 className="font-semibold text-lg mb-2">As Renter</h3>
-          <ReviewsSummary userId={userId} />
           <ul className="mt-4 space-y-4 bg-white/70 rounded-xs shadow-sm p-4 border border-neutral-300">
             {asRenter.map((r) => (
               <>

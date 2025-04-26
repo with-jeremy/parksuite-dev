@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { db } from '@/lib/supabaseClient';
+import { db } from '@/utils/supabase/client';
 import BookingsCard from "@/app/components/BookingsCard";
 import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/ui/card";
 
@@ -17,7 +17,7 @@ export default function BookingsDashboard() {
     setLoading(true);
     db.from("bookings")
       .select("id, booking_date, status, total_price, parking_spot:parking_spot_id(*), user_id")
-      .eq('parking_spots.owner_id', user.id)
+      .eq('parking_spot.owner_id', user.id)
       .gte("booking_date", new Date().toISOString())
       .order("booking_date", { ascending: true })
       .limit(6)
@@ -31,7 +31,36 @@ export default function BookingsDashboard() {
           ...booking,
           spot: booking.parking_spot,
         }));
-        setBookings(bookingsWithSpotInfo);
+
+        // Fetch images for each booking's parking spot
+        const supabaseAdmin = require('@supabase/supabase-js').createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL || '',
+          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+        );
+        const bookingsWithImagesPromises = bookingsWithSpotInfo.map(async (booking) => {
+          const { data: images } = await db
+            .from("parking_spot_images")
+            .select("image_url, is_primary")
+            .eq("parking_spot_id", booking.spot.id);
+
+          let signedImages = [];
+          if (images && images.length > 0) {
+            signedImages = await Promise.all(images.map(async (img) => {
+              const { data } = await supabaseAdmin.storage
+                .from('parking-spot-images')
+                .createSignedUrl(img.image_url.replace(/^.*parking-spot-images\//, ''), 60 * 60);
+              return { signedUrl: data?.signedUrl || null, is_primary: img.is_primary };
+            }));
+          }
+
+          return {
+            ...booking,
+            signedImages,
+          };
+        });
+
+        const resolvedBookingsWithImages = await Promise.all(bookingsWithImagesPromises);
+        setBookings(resolvedBookingsWithImages);
         setLoading(false);
       });
   }, [isLoaded, isSignedIn, user]);
@@ -52,7 +81,7 @@ export default function BookingsDashboard() {
       ) : (
         <div className="w-full max-w-7xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {bookings.map((booking) => (
-            <BookingsCard key={booking.id} booking={booking} isHost={true} />
+            <BookingsCard key={booking.id} booking={booking} isHost={true} signedImages={booking.signedImages} />
           ))}
         </div>
       )}

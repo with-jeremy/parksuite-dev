@@ -6,7 +6,7 @@ import { useState, useMemo, useEffect } from 'react';
 import Image from 'next/image';
 import { Badge } from './ui/badge';
 import { MapPin } from 'lucide-react';
-import { db } from '@/lib/supabaseClient';
+import { db } from '@/utils/supabase/client';
 import { SidebarProvider, Sidebar, SidebarContent, SidebarTrigger } from '@/app/components/ui/sidebar';
 import { useSearchParams } from 'next/navigation';
 

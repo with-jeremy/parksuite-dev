@@ -4,8 +4,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { db } from '@/lib/supabaseClient';
-import { TablesInsert } from "@/lib/supabase";
+import { db } from '@/utils/supabase/client';
+import { TablesInsert } from "@/types/supabase";
 import Image from "next/image";
 
 const PARKING_TYPES = ["driveway", "garage", "lot", "street"];

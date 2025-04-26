@@ -2,7 +2,7 @@
 
 import { useUser } from '@clerk/nextjs';
 import { useEffect, useState } from 'react';
-import { db } from '@/lib/supabaseClient';
+import { db } from '@/utils/supabase/client';
 import { Calendar, Car, MapPin, CreditCard } from 'lucide-react';
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '../components/ui/card';
 import { Button } from '../components/ui/button';
@@ -14,6 +14,7 @@ export default function DashboardPage() {
   const [upcomingHostedBookings, setUpcomingHostedBookings] = useState([]);
   const [hostListings, setHostListings] = useState([]);
   const [hostEarnings, setHostEarnings] = useState(0);
+  const [hostAllTimeBookings, setHostAllTimeBookings] = useState([]);
 
   useEffect(() => {
     if (!isLoaded || !user) return;
@@ -25,7 +26,7 @@ export default function DashboardPage() {
       .gte('booking_date', dateToday.toISOString())
       .order('booking_date', { ascending: true })
       .then(({ data }) => setUpcomingRentalBookings(data || []));
-    // Fetch bookings where the current user is the host
+    // Fetch bookings where the current user is the host (upcoming)
     db.from('bookings')
       .select('id, booking_date, parking_spots (id, title, city, state, owner_id)')
       .eq('parking_spots.owner_id', user.id)
@@ -37,27 +38,27 @@ export default function DashboardPage() {
       .select('id, title, is_active')
       .eq('owner_id', user.id)
       .then(async ({ data }) => {
-      setHostListings(data || []);
-      if (!user.id) {
-        setHostEarnings(0);
-        return;
-      }
-      // Fetch earnings_payments for this user with status 'earned'
-      db.from('earnings_payments')
-        .select('amount')
-        .eq('user_id', user.id)
-        .eq('status', 'earned')
-        .then(({ data: earnings, error }) => {
-          if (error || !earnings) {
-            setHostEarnings(0);
-            return;
-          }
-          let total = 0;
-          for (const e of earnings) {
-            total += e.amount || 0;
-          }
-          setHostEarnings(total);
-        });
+        setHostListings(data || []);
+    // Fetch earnings_payments for this user with status 'earned'
+    db.from('earnings_payments')
+      .select('amount')
+      .eq('user_id', user.id)
+      .then(({ data: earnings, error }) => {
+        if (error || !earnings) {
+          setHostEarnings(0);
+          return;
+        }
+        let total = 0;
+        for (const e of earnings) {
+          total += e.amount || 0;
+        }
+        setHostEarnings(total);
+      });
+    // Fetch all-time bookings as host
+    db.from('bookings')
+      .select('id, parking_spots (owner_id)')
+      .eq('parking_spots.owner_id', user.id)
+      .then(({ data }) => setHostAllTimeBookings(data || []));
       });
   }, [isLoaded, user]);
 
@@ -116,8 +117,16 @@ export default function DashboardPage() {
               <Car className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{hostListings?.length || 0}</div>
-              <p className="text-xs text-muted-foreground">Active parking spots</p>
+              <div className="flex flex-row justify-between items-center gap-6">
+                <div className="flex flex-col items-center flex-1">
+                  <div className="text-2xl font-bold text-center">{hostListings?.length || 0}</div>
+                  <p className="text-xs text-muted-foreground text-center">Active Listings</p>
+                </div>
+                <div className="flex flex-col items-center flex-1 border-l pl-6">
+                  <div className="text-2xl font-bold text-center">{hostAllTimeBookings.length}</div>
+                  <p className="text-xs text-muted-foreground text-center">All-Time Bookings</p>
+                </div>
+              </div>
             </CardContent>
             <CardFooter>
               <Button variant="ghost" size="sm" className="w-full" asChild>
@@ -164,7 +173,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Upcoming Parking Reservations</CardTitle>
             <CardDescription>
-              <div className="text-sm text-muted-foreground">Your next parking spots!</div>
+              <div className="text-sm mb-4 text-muted-foreground">Your next parking spots!</div>
               <Button>
                 <Link href="/dashboard/rentedbookings">View All Rented Bookings</Link>
               </Button>
@@ -186,10 +195,10 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <Link
-                      href={`/listings/${booking.parking_spots.id}`}
+                      href={`/dashboard/rentedbookings/${booking.id}`}
                       className="inline-flex items-center px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                     >
-                      See Listing Details
+                      See Booking Details
                     </Link>
                     <button
                       className="inline-flex items-center px-3 py-1.5 text-sm font-medium bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
@@ -225,7 +234,7 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Upcoming Hosted Bookings</CardTitle>
             <CardDescription>
-              <div className="text-sm text-muted-foreground">Your next parking guests!</div>
+              <div className="text-sm mb-4 text-muted-foreground">Your next parking guests!</div>
               <Button>
                 <Link href="/dashboard/hostedbookings">View All Hosted Bookings</Link>
               </Button>
@@ -247,10 +256,10 @@ export default function DashboardPage() {
                       </p>
                     </div>
                     <Link
-                      href={`/listings/${booking.parking_spots.id}`}
+                      href={`/dashboard/hostedbookings/${booking.id}`}
                       className="inline-flex items-center px-3 py-1.5 text-sm font-medium bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors"
                     >
-                      See Listing Details
+                      See Hosting Details
                     </Link>
                   </div>
                 ))}
@@ -258,9 +267,6 @@ export default function DashboardPage() {
             ) : (
               <div className="text-center py-6 text-muted-foreground">
                 <p>No upcoming bookings</p>
-                <Button variant="outline" size="sm" className="mt-2" asChild>
-                  <Link href="/listings">Find Parking</Link>
-                </Button>
               </div>
             )}
           </CardContent>

@@ -3,10 +3,8 @@
 import { useEffect, useState } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
-import { db } from '@/lib/supabaseClient';
-import { TablesUpdate } from "@/lib/supabase";
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/lib/supabase';
+import { db } from '@/utils/supabase/client';
+import { Database, TablesUpdate } from "@/types/supabase";
 import Image from "next/image";
 
 const PARKING_TYPES = ["driveway", "garage", "lot", "street"];
@@ -77,9 +75,8 @@ export default function EditSpotPage() {
       db.from("parking_spot_images").select("id, image_url, is_primary").eq("parking_spot_id", id).then(async ({ data }) => {
         if (data) {
           // Generate signed URLs for all images
-          const supabaseAdmin = createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
           const signed = await Promise.all(data.map(async (img: any) => {
-            const { data: signedData } = await supabaseAdmin.storage
+            const { data: signedData } = await db.storage
               .from('parking-spot-images')
               .createSignedUrl(img.image_url.replace(/^.*parking-spot-images\//, ''), 60 * 60);
             return { id: img.id, signedUrl: signedData?.signedUrl || img.image_url, is_primary: img.is_primary };

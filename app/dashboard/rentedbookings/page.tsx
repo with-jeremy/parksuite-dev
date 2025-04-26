@@ -2,9 +2,8 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { db } from '@/lib/supabaseClient';
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/lib/supabase';
+import { db } from '@/utils/supabase/client';
+import { Database } from '@/types/supabase';
 import BookingsCard from "@/app/components/BookingsCard";
 import { Card, CardHeader, CardTitle, CardContent } from "@/app/components/ui/card";
 
@@ -37,11 +36,6 @@ export default function BookingsDashboard() {
         setBookings(bookingsWithSpotInfo);
         
         // Fetch images for each booking's parking spot
-        const supabaseAdmin = createClient<Database>(
-          process.env.NEXT_PUBLIC_SUPABASE_URL || '', 
-          process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
-        );
-        
         const bookingsWithImagesPromises = bookingsWithSpotInfo.map(async (booking) => {
           const { data: images } = await db
             .from("parking_spot_images")
@@ -51,7 +45,7 @@ export default function BookingsDashboard() {
           let signedImages = [];
           if (images && images.length > 0) {
             signedImages = await Promise.all(images.map(async (img) => {
-              const { data } = await supabaseAdmin.storage
+              const { data } = await db.storage
                 .from('parking-spot-images')
                 .createSignedUrl(img.image_url.replace(/^.*parking-spot-images\//, ''), 60 * 60);
               return { signedUrl: data?.signedUrl || null, is_primary: img.is_primary };

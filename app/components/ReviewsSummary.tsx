@@ -1,4 +1,4 @@
-import { db } from "@/lib/supabaseClient";
+import { db } from '@/utils/supabase/client';
 
 interface ReviewsSummaryProps {
   userId: string;

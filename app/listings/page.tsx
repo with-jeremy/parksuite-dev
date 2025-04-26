@@ -1,13 +1,11 @@
 // --- Server component for fetching and passing spots ---
-import { db } from '@/lib/supabaseClient';
-import { createClient } from '@supabase/supabase-js';
-import { Database } from '@/lib/supabase';
+import { db } from '@/utils/supabase/client';
+
 import ListingsFilterClient from '../components/ListingsFilterClient';
 import { cookies } from 'next/headers';
 
-const supabaseAdmin = createClient<Database>(process.env.NEXT_PUBLIC_SUPABASE_URL || '', process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '');
-
 export default async function ListingsPage() {
+
   // Get search param from URL
   const cookieStore = await cookies();
   const cookieValue = cookieStore.get('next-url')?.value || '';
@@ -35,7 +33,7 @@ export default async function ListingsPage() {
       let signedUrl = null;
       if (Array.isArray(spot.parking_spot_images) && spot.parking_spot_images.length > 0) {
         const imagePath = spot.parking_spot_images[0].image_url;
-        const { data } = await supabaseAdmin.storage
+        const { data } = await db.storage
           .from('parking-spot-images')
           .createSignedUrl(imagePath.replace(/^.*parking-spot-images\//, ''), 60 * 60); // 1 hour expiry
         signedUrl = data?.signedUrl || null;

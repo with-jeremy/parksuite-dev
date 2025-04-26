@@ -7,7 +7,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/app
 import { Button } from '@/app/components/ui/button';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from '@/app/components/ui/table';
 import { Users, Home, CalendarCheck, PiggyBank } from 'lucide-react';
-import { db } from '@/lib/supabaseClient';
+import { db } from '@/utils/supabase/client';
 
 // Table components for each card (stubbed, fetch on demand)
 function ListingsTable({ data }: { data: any[] }) {
@@ -309,7 +309,7 @@ export default function AdminDashboard() {
               <Users className="h-8 w-8 text-blue-600" />
               <div>
                 <CardTitle>User Management</CardTitle>
-                <CardDescription>New: {counts.users.new} | Total: {counts.users.total}</CardDescription>
+                <CardDescription className="mt-2">New: {counts.users.new} | Total: {counts.users.total}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -321,7 +321,7 @@ export default function AdminDashboard() {
               <Home className="h-8 w-8 text-green-600" />
               <div>
                 <CardTitle>Listings</CardTitle>
-                <CardDescription>New: {counts.listings.new} | Total: {counts.listings.total}</CardDescription>
+                <CardDescription className="mt-2">New: {counts.listings.new} | Total: {counts.listings.total}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -333,7 +333,7 @@ export default function AdminDashboard() {
               <CalendarCheck className="h-8 w-8 text-yellow-600" />
               <div>
                 <CardTitle>Bookings</CardTitle>
-                <CardDescription>New: {counts.bookings.new} | Total: {counts.bookings.total}</CardDescription>
+                <CardDescription className="mt-2">New: {counts.bookings.new} | Total: {counts.bookings.total}</CardDescription>
               </div>
             </CardHeader>
             <CardContent>
@@ -345,7 +345,7 @@ export default function AdminDashboard() {
               <PiggyBank className="h-8 w-8 text-purple-600" />
               <div>
                 <CardTitle>Earnings</CardTitle>
-                <CardDescription>
+                <CardDescription className="mt-2">
                   In: ${counts.earnings.paidIn} ({counts.earnings.paidInCount}) / Out: ${counts.earnings.paidOut} ({counts.earnings.paidOutCount}) / App: ${counts.earnings.app}
                 </CardDescription>
               </div>

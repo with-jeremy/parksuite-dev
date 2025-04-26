@@ -6,7 +6,7 @@ import ReviewForm from '@/app/components/ReviewForm';
 
 export default async function CreateReviewPage({ params }) {
   const user = await currentUser();
-  const bookingId = await params;
+  const bookingId = await params.id; // FIX: get id from params
   if (!user) return redirect('/dashboard');
 
   return (

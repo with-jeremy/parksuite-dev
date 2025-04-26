@@ -1,11 +1,11 @@
-import { db } from "@/lib/supabaseClient";
+import { db } from "@/utils/supabase/client";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 import { Button } from '@/app/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/app/components/ui/card';
 
 export default async function ConfirmationPage({ params }) {
-  const { id } = params;
+  const { id } = await params;
 
   // Fetch booking details
   const { data: booking, error } = await db
