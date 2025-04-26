@@ -6,6 +6,7 @@ import { db } from '@/lib/supabaseClient';
 import Link from "next/link";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
+import { ButtonProps } from '@/app/components/ui/button';
 
 export default function SpotsDashboard() {
   const { isLoaded, isSignedIn, user } = useUser();
@@ -66,13 +67,10 @@ export default function SpotsDashboard() {
               <CardContent>
                 <div className="text-sm text-muted-foreground mb-1">{spot.address}, {spot.city}, {spot.state} {spot.zip_code}</div>
                 <div className="text-sm text-muted-foreground mb-1">Type: {spot.type} | ${spot.price_per_day}/day | Spaces: {spot.spaces_available ?? 'N/A'}</div>
-              </CardContent>
-              <CardFooter className="flex gap-2 justify-end">
-                <Button asChild variant="outline" size="sm">
-                  <Link href={`/dashboard/spots/${spot.id}`}>Edit</Link>
+                <Button className="mt-2">
+                    <Link className="text-white" href={`/dashboard/spots/${spot.id}`}>Edit</Link>
                 </Button>
-                
-              </CardFooter>
+              </CardContent>
             </Card>
           ))}
         </div>

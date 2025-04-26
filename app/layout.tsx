@@ -34,9 +34,15 @@ export default function RootLayout({
     <ClerkProvider>
       <html lang="en">
         <body className={`${abel.className} bg-background text-foreground antialiased`}>
-          <nav className="bg-background border-b border-blood">
+          <header
+            className="
+              sticky top-0 z-40
+              bg-background border-b border-blood
+              py-2
+              "
+          >
             {/* Responsive nav container */}
-            <div className="max-w-7xl mx-auto w-full px-4 py-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0">
+            <nav className="max-w-7xl mx-auto w-full px-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0">
               {/* Logo + Auth row (mobile: both, sm+: only logo) */}
               <div className="w-full flex justify-between items-center">
                 <Link href="/" className="block w-auto">
@@ -88,10 +94,10 @@ export default function RootLayout({
                   </SignedIn>
                 </div>
               </div>
-            </div>
-          </nav>
+            </nav>
+          </header>
           <main className="mx-auto">{children}</main>
-          <Footer /> {/* Added Footer component here */}
+          <Footer />
         </body>
       </html>
     </ClerkProvider>
