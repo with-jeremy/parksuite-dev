@@ -19,25 +19,29 @@ export default function DashboardPage() {
   useEffect(() => {
     if (!isLoaded || !user) return;
     const dateToday = new Date();
-    // Fetch upcoming bookings
+    // Fetch upcoming bookings (as renter)
     db.from('bookings')
       .select('id, booking_date, parking_spots (id, title, city, state, owner_id)')
       .eq('user_id', user.id)
       .gte('booking_date', dateToday.toISOString())
       .order('booking_date', { ascending: true })
       .then(({ data }) => setUpcomingRentalBookings(data || []));
-    // Fetch bookings where the current user is the host (upcoming)
+    // Fetch all upcoming bookings, then filter for hosted bookings (as host)
     db.from('bookings')
       .select('id, booking_date, parking_spots (id, title, city, state, owner_id)')
-      .eq('parking_spots.owner_id', user.id)
       .gte('booking_date', dateToday.toISOString())
       .order('booking_date', { ascending: true })
-      .then(({ data }) => setUpcomingHostedBookings(data || []));
+      .then(({ data }) => {
+        const hosted = (data || []).filter(
+          (booking) => booking.parking_spots?.owner_id === user.id
+        );
+        setUpcomingHostedBookings(hosted);
+      });
     // Fetch host listings (parking spots)
     db.from('parking_spots')
       .select('id, title, is_active')
       .eq('owner_id', user.id)
-      .then(async ({ data }) => {
+      .then(({ data }) => {
         setHostListings(data || []);
     // Fetch earnings_payments for this user with status 'earned'
     db.from('earnings_payments')
