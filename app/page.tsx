@@ -51,12 +51,12 @@ export default async function Home() {
             priority
           />
         </div>
-        <div className="absolute inset-0 flex items-center justify-center z-10">
-          <div className="w-full max-w-7xl px-4 md:px-6">
-            <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-              <div className="flex flex-col justify-center space-y-4">
+        <div className="absolute inset-0 flex items-center z-10">
+          <div className="w-full ">
+            <div className="flex flex-col max-w-7xl m-auto px-8 md:px-6 space-y-8 items-start">
+              <div className="upper flex flex-col space-y-4 text-left">
                 <div className="space-y-2">
-                  <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none text-white">
+                  <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none text-white">
                     Event Parking Made Easy
                   </h1>
                   <p className="max-w-[600px] text-gray-200 md:text-xl">
@@ -74,7 +74,7 @@ export default async function Home() {
                   </Button>
                 </div>
               </div>
-              <div className="mx-auto w-full hidden lg:block max-w-[500px] lg:max-w-none">
+              <div className="lower w-full max-w-[500px]">
                 <HeroSearchForm />
               </div>
             </div>
