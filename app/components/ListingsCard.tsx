@@ -2,22 +2,21 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import BookingForm from "./BookingForm";
-import { Button } from '@/app/components/ui/button';
-import {
-  Dialog,
-  DialogContent,
-} from "./ui/dialog";
-import Link from 'next/link';
+import { Button } from "@/app/components/ui/button";
+import { Dialog, DialogContent } from "./ui/dialog";
+import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
 import { useRouter } from "next/navigation";
+import { Card, CardContent } from "./ui/card";
+import { Badge } from "./ui/badge";
+import { MapPin } from "lucide-react";
 
 interface ListingsCardProps {
   spot: any;
-  amenities: { amenities: { name: string } }[];
-  signedImages: { signedUrl: string | null; is_primary: boolean | null }[];
+  isList?: boolean;
 }
 
-const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImages }) => {
+const ListingsCard: React.FC<ListingsCardProps> = ({ spot, isList }) => {
   const [showBooking, setShowBooking] = useState(false);
   const [uiMessage, setUiMessage] = useState<string | null>(null);
   const [zoomOpen, setZoomOpen] = useState(false);
@@ -25,164 +24,159 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, amenities, signedImag
   const { isSignedIn, user } = useUser();
   const router = useRouter();
 
+  // Use images from spot.parking_spot_images
+  const images = Array.isArray(spot.parking_spot_images)
+    ? spot.parking_spot_images
+    : [];
+  // Prefer primary image if it exists, otherwise show all (up to 3)
+  // Refactor: if isList, only show primaryImage; else show up to 3 images
+  const primaryImage = images.find((img) => img.is_primary);
+
+  // --- Amenities extraction, step by step ---
+  // Step 1: Get the array of parking_spot_amenities
+  const spotAmenities = Array.isArray(spot.parking_spot_amenities)
+    ? spot.parking_spot_amenities
+    : [];
+  // Step 2: For each, get the amenities object
+  const amenitiesObjects = spotAmenities.map((a: any) => a.amenities);
+  // Step 3: For each amenities object, get the name
+  const amenities = amenitiesObjects
+    .filter((a: any) => a && a.name)
+    .map((a: any) => a.name);
+
   const handleBookNow = () => {
-    console.log('Book Now clicked');
-    
+    console.log("Book Now clicked");
+
     // Check if user is signed in
     if (!isSignedIn) {
-      setUiMessage('Please sign in to book this spot');
+      setUiMessage("Please sign in to book this spot");
       setTimeout(() => {
-        router.push('/sign-in');
+        router.push("/sign-in");
       }, 1500);
       return;
     }
-    
-    setUiMessage('Opening booking modal...');
+
+    setUiMessage("Opening booking modal...");
     setShowBooking(true);
     setTimeout(() => setUiMessage(null), 2000);
   };
 
-  React.useEffect(() => {
-    if (!zoomOpen) return;
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === "ArrowRight") {
-        setZoomIdx((prev) => (prev + 1) % (signedImages.length));
-      } else if (e.key === "ArrowLeft") {
-        setZoomIdx((prev) => (prev - 1 + signedImages.length) % signedImages.length);
-      }
-    };
-    window.addEventListener("keydown", handleKey);
-    return () => window.removeEventListener("keydown", handleKey);
-  }, [zoomOpen, signedImages.length]);
-
-  return (
-    <>
-      <div className="max-w-2xl mx-auto bg-white rounded-lg shadow p-6">
-        <h2 className="text-2xl font-bold mb-2">{spot.title}</h2>
-        <p className="text-gray-600 mb-4">{spot.address + ", " + spot.city + ", " + spot.state}</p>
-        <div className="mb-4 flex gap-2 overflow-x-auto">
-          {signedImages && signedImages.length > 0 ? (
-            signedImages.map((img, idx) =>
-              img.signedUrl ? (
-                <button
-                  key={idx}
-                  type="button"
-                  aria-label={`View image ${idx + 1} of ${signedImages.length}`}
-                  className="focus:outline-none"
-                  onClick={() => {
-                    setZoomIdx(idx);
-                    setZoomOpen(true);
-                  }}
-                  style={{ background: "none", border: 0, padding: 0 }}
-                >
-                  <Image
-                    src={img.signedUrl}
-                    alt={spot.title + " image"}
-                    className={`h-32 w-48 object-cover rounded ${img.is_primary ? 'border-4 border-blue-500' : ''}`}
-                    width={192}
-                    height={128}
-                  />
-                </button>
-              ) : null
-            )
-          ) : (
-            <div className="text-gray-400">No images available</div>
-          )}
+  // Unified card content
+  const cardContent = (
+    <Card className="overflow-hidden transition-all hover:shadow-md">
+      {isList ? (
+        <div className="aspect-video relative overflow-hidden flex items-center justify-center">
+          <Image
+            src={primaryImage?.image_url || "/file.svg"}
+            alt={spot.title}
+            width={600}
+            height={400}
+            className="object-contain transition-transform group-hover:scale-105"
+            priority
+          />
         </div>
-        <div className="mb-4">
-          <h3 className="font-semibold">Amenities:</h3>
-          <ul className="flex flex-wrap gap-2 mt-1">
-            {amenities && amenities.length > 0 ? (
-              amenities.map((a, idx) => (
-                <li key={idx} className="bg-gray-100 px-2 py-1 rounded text-sm">
-                  {a.amenities?.name}
-                </li>
-              ))
-            ) : (
-              <li className="text-gray-400">No amenities listed</li>
-            )}
-          </ul>
-        </div>
-        <div className="text-gray-700">
-          <p><span className="font-semibold">Description:</span> {spot.description || 'No description provided.'}</p>
-        </div>
-        <div className="mt-6 p-4 bg-gray-50 rounded-lg border flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div>
-            <div className="flex justify-between w-56">
-              <span className="font-medium">Price per day:</span>
-              <span>${spot.price_per_day?.toFixed(2) || '0.00'}</span>
-            </div>
-            <div className="flex justify-between w-56 mt-1">
-              <span className="text-sm text-gray-900">Rental Fee (3%):</span>
-              <span className="text-sm text-gray-900">${spot.price_per_day ? (spot.price_per_day * 0.03).toFixed(2) : '0.00'}</span>
-            </div>
-            <div className="flex justify-between w-56 mt-2 border-t pt-2 font-semibold">
-              <span>Total:</span>
-              <span>${spot.price_per_day ? (spot.price_per_day * 1.03).toFixed(2) : '0.00'}</span>
-            </div>
-          </div>
-          <Button>
-            <Link href={`/dashboard/reviews/${spot.owner_id}`} className="text-white font-bold">See Host's Reviews</Link>
-          </Button>
-          <button
-            className="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow mt-4 md:mt-0"
-            onClick={handleBookNow}
-          >
-            Book Now
-          </button>
-        </div>
-        {uiMessage && (
-          <div className="mt-4 p-2 bg-yellow-100 text-yellow-800 rounded text-center">{uiMessage}</div>
-        )}
-      </div>
-      {showBooking && (
-        <BookingForm spot={spot} onClose={() => {
-          console.log('Booking modal closed');
-          setUiMessage('Closed booking modal.');
-          setShowBooking(false);
-          setTimeout(() => setUiMessage(null), 2000);
-        }} />
-      )}
-      <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
-        <DialogContent className="max-w-2xl flex flex-col items-center">
-          {signedImages && signedImages.length > 0 && (
-            <div className="relative w-full flex flex-col items-center">
+      ) : (
+        <div className="w-full flex flex-row md:flex-row gap-2">
+          {[0, 1, 2].map((idx) => (
+            <div
+              key={idx}
+              className="flex-1 relative overflow-hidden flex items-center justify-center"
+            >
               <Image
-                src={signedImages[zoomIdx].signedUrl || ''}
-                alt={spot.title + ` zoomed image ${zoomIdx + 1}`}
-                width={600}
-                height={400}
-                className="object-contain rounded max-h-[70vh] bg-black"
+                src={images[idx]?.image_url || "/file.svg"}
+                alt={spot.title}
+                width={300}
+                height={200}
+                className="object-contain transition-transform group-hover:scale-105"
                 priority
               />
-              {signedImages.length > 1 && (
-                <div className="absolute inset-0 flex items-center justify-between pointer-events-none">
-                  <button
-                    type="button"
-                    aria-label="Previous image"
-                    className="pointer-events-auto bg-white/80 hover:bg-white text-black rounded-full p-2 m-2 focus:outline-none"
-                    onClick={() => setZoomIdx((zoomIdx - 1 + signedImages.length) % signedImages.length)}
-                  >
-                    &#8592;
-                  </button>
-                  <button
-                    type="button"
-                    aria-label="Next image"
-                    className="pointer-events-auto bg-white/80 hover:bg-white text-black rounded-full p-2 m-2 focus:outline-none"
-                    onClick={() => setZoomIdx((zoomIdx + 1) % signedImages.length)}
-                  >
-                    &#8594;
-                  </button>
-                </div>
-              )}
-              <div className="mt-2 text-sm text-gray-700">
-                Image {zoomIdx + 1} of {signedImages.length}
-              </div>
             </div>
-          )}
-        </DialogContent>
-      </Dialog>
-    </>
+          ))}
+        </div>
+      )}
+      <CardContent className="p-4">
+        <div className="flex items-center justify-between">
+          <h3 className="font-semibold text-lg truncate">{spot.title}</h3>
+        </div>
+        <div className="mt-1 flex items-center gap-2 text-sm text-muted-foreground">
+          <MapPin className="h-4 w-4" />
+          <span>
+            {spot.city}, {spot.state}
+          </span>
+        </div>
+        <div className="mt-2 flex items-center justify-between">
+          <p className="font-semibold">
+            ${spot.price_per_day}
+            <span className="text-sm font-normal text-muted-foreground">
+              {" "}
+              / day
+            </span>
+          </p>
+          <Badge variant={spot.spaces_available > 0 ? "default" : "secondary"}>
+            {spot.spaces_available > 0 ? "Available" : "Unavailable"}
+          </Badge>
+        </div>
+        {spot.description && (
+          <div className="mt-2 text-sm text-gray-800">{spot.description}</div>
+        )}
+
+        {/* Amenities pill list */}
+        <div className="mt-2 flex flex-wrap gap-2">
+          {amenities.map((name: string, idx: number) => (
+            <Badge key={idx} variant="outline" className="text-sm">
+              {name}
+            </Badge>
+          ))}
+        </div>
+        {!isList && (
+          <div className="mt-12 flex flex-col sm:flex-row justify-center items-center gap-2 text-sm text-muted-foreground">
+            <div className="flex w-full max-w-xs items-center gap-1">
+              <Button className="w-full">
+                <Link
+                  href={`/dashboard/reviews/${spot.owner_id}`}
+                  className="text-white font-bold w-full block text-center"
+                >
+                  See Host's Reviews
+                </Link>
+              </Button>
+            </div>
+            <div className="flex w-full max-w-xs items-center gap-1">
+              <Button
+                className="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded shadow"
+                onClick={handleBookNow}
+              >
+                Book Now
+              </Button>
+            </div>
+          </div>
+        )}
+        {showBooking && (
+          <BookingForm
+            spot={spot}
+            onClose={() => {
+              console.log("Booking modal closed");
+              setUiMessage("Closed booking modal.");
+              setShowBooking(false);
+              setTimeout(() => setUiMessage(null), 2000);
+            }}
+          />
+        )}
+        {uiMessage && (
+          <div className="mt-4 p-2 bg-yellow-100 text-yellow-800 rounded text-center">
+            {uiMessage}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+
+  // Only wrap in Link if isList, otherwise render card directly
+  return isList ? (
+    <Link href={`/listings/${spot.id}`} className="group block">
+      {cardContent}
+    </Link>
+  ) : (
+    cardContent
   );
 };
 

@@ -2,7 +2,7 @@ import { getServerDb } from "@/utils/supabase/server";
 import { Abel } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
-import ListingsFilterClient from "@/app/components/ListingsFilterClient";
+import ListingsCard from "@/app/components/ListingsCard";
 import { Button } from "@/app/components/ui/button";
 import { ButtonProps } from "@/app/components/ui/button";
 import HeroSearchForm from "./components/HeroSearchForm";
@@ -16,8 +16,12 @@ export default async function Home() {
   // Fetch spots with their images (if any)
   const { data: spots, error } = await db
     .from("parking_spots")
-    .select("*, parking_spot_images(image_url, is_primary)")
-    .eq("is_active", true);
+    .select(
+      "*, parking_spot_images(image_url, is_primary), parking_spot_amenities(amenities(name))"
+    )
+    .order("created_at", { ascending: false })
+    .eq("is_active", true)
+    .limit(4);
 
   if (error) {
     return (
@@ -28,27 +32,6 @@ export default async function Home() {
   if (!spots) {
     return <div className="p-8">Loading...</div>;
   }
-
-  // Generate signed URLs for the first image of each spot
-  const spotsWithSignedUrls = await Promise.all(
-    spots.map(async (spot) => {
-      let signedUrl = null;
-      if (
-        Array.isArray(spot.parking_spot_images) &&
-        spot.parking_spot_images.length > 0
-      ) {
-        const imagePath = spot.parking_spot_images[0].image_url;
-        const { data } = await db.storage
-          .from("parking-spot-images")
-          .createSignedUrl(
-            imagePath.replace(/^.*parking-spot-images\//, ""),
-            60 * 60
-          ); // 1 hour expiry
-        signedUrl = data?.signedUrl || null;
-      }
-      return { ...spot, signedUrl };
-    })
-  );
 
   return (
     <>
@@ -94,13 +77,15 @@ export default async function Home() {
           </div>
         </div>
       </section>
-      <section className="relative w-full py-8 md:py-12 lg:py-16 bg-gray-50">
-        <div className="container mx-auto max-w-7xl px-4 py-8">
-          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl">
+      <section className="relative w-full py-8 md:py-12 lg:py-16 bg-gradient-to-b from-blue-50 via-gray-50 to-gray-100">
+        <div className="container mx-auto  px-4 py-8">
+          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl mb-8 text-blue-900 drop-shadow-sm">
             Available Parking
           </h2>
-          <div className="w-full py-8">
-            <ListingsFilterClient spots={spotsWithSignedUrls} gridOnly />
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            {spots.map((spot: any) => (
+              <ListingsCard key={spot.id} spot={spot} isList={true} />
+            ))}
           </div>
         </div>
       </section>

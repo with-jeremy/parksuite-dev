@@ -23,39 +23,62 @@ export type BookingsCardProps = {
       state?: string;
       description?: string;
       price_per_day?: number;
+      primaryImage?: { image_url: string; is_primary?: boolean } | null;
+      images?: { image_url: string; is_primary?: boolean }[];
+      amenities?: string[];
+      parking_spot_amenities?: { amenities: { name: string } }[];
     };
   };
-  signedImages?: { signedUrl: string | null; is_primary: boolean | null }[];
-  detailView?: boolean;
+  isList?: boolean;
   isHost?: boolean;
 };
 
 const BookingsCard: React.FC<BookingsCardProps> = ({
   booking,
-  signedImages,
-  detailView,
+  isList,
   isHost,
 }) => {
   const { spot } = booking;
+  // --- Amenities extraction, step by step ---
+  // Step 1: Get the array of parking_spot_amenities
+  const spotAmenities = Array.isArray(spot.parking_spot_amenities)
+    ? spot.parking_spot_amenities
+    : [];
+  // Step 2: For each, get the amenities object
+  const amenitiesObjects = spotAmenities.map((a: any) => a.amenities);
+  // Step 3: For each amenities object, get the name
+  const amenities = amenitiesObjects
+    .filter((a: any) => a && a.name)
+    .map((a: any) => a.name);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomIdx, setZoomIdx] = useState(0);
+
+  // Determine which images to show
+  let displayImages: { image_url: string; is_primary?: boolean }[] = [];
+  if (isList) {
+    if (spot.primaryImage) {
+      displayImages = [spot.primaryImage];
+    }
+  } else if (Array.isArray(spot.images)) {
+    displayImages = spot.images;
+  }
 
   React.useEffect(() => {
     if (!zoomOpen) return;
     const handleKey = (e: KeyboardEvent) => {
       if (e.key === "ArrowRight") {
-        setZoomIdx((prev) => (prev + 1) % (signedImages?.length || 1));
+        setZoomIdx((prev) => (prev + 1) % (displayImages?.length || 1));
       } else if (e.key === "ArrowLeft") {
         setZoomIdx(
           (prev) =>
-            (prev - 1 + (signedImages?.length || 1)) %
-            (signedImages?.length || 1)
+            (prev - 1 + (displayImages?.length || 1)) %
+            (displayImages?.length || 1)
         );
       }
     };
     window.addEventListener("keydown", handleKey);
     return () => window.removeEventListener("keydown", handleKey);
-  }, [zoomOpen, signedImages?.length]);
+  }, [zoomOpen, displayImages?.length]);
 
   const formattedDate = new Date(booking.booking_date).toLocaleDateString(
     undefined,
@@ -71,14 +94,18 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
     .filter(Boolean)
     .join(", ");
 
+  const cardClassName = isList
+    ? "flex-col flex w-72 mb-6 border-2 shrink shadow-md"
+    : "flex-col flex mb-6 border-2 shrink shadow-md";
+
   return (
     <>
-      <Card className="w-full m-auto md:max-w-7xl mb-6 overflow-hidden border-2 shadow-md">
-        <CardHeader className="pt-4 pb-3 px-6 bg-gradient-to-r from-blue-50 to-white">
-          <div className="flex justify-between items-start">
+      <Card className={cardClassName}>
+        <CardHeader className="pt-4 pb-3 px-4 bg-gradient-to-r from-blue-50 to-white">
+          <div className="flex items-center justify-between">
             <div>
               <CardTitle className="text-xl font-bold text-blue-800">
-                {detailView ? (
+                {!isList ? (
                   spot.title
                 ) : (
                   <Link
@@ -98,27 +125,40 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
                 {formattedDate}
               </div>
             </div>
-            <Badge
-              variant="outline"
-              className="bg-blue-100 text-blue-800 border-blue-200 font-medium"
-            >
-              Parking Spot
-            </Badge>
+            {isHost ? (
+              <Badge
+                variant="outline"
+                className="bg-blue-100 text-blue-800 border-blue-200 font-medium text-center"
+              >
+                Hosted
+                <br />
+                Booking
+              </Badge>
+            ) : (
+              <Badge
+                variant="outline"
+                className="bg-green-100 text-green-800 border-green-200 font-medium text-center"
+              >
+                Rented
+                <br />
+                Booking
+              </Badge>
+            )}
           </div>
         </CardHeader>
 
-        <CardContent className="px-6 py-4">
+        <CardContent className="py-0 px-0">
           {/* Display images with improved carousel */}
-          {signedImages && signedImages.length > 0 ? (
+          {displayImages && displayImages.length > 0 ? (
             <div className="mb-5 overflow-hidden">
-              <div className="flex gap-2 pb-2 overflow-x-auto scrollbar-thin scrollbar-thumb-slate-300">
-                {signedImages.map((img, idx) =>
-                  img.signedUrl ? (
+              <div className="flex gap-2 pb-2 overflow-x-auto">
+                {displayImages.map((img, idx) =>
+                  img.image_url ? (
                     <button
                       key={idx}
                       type="button"
                       aria-label={`View image ${idx + 1} of ${
-                        signedImages.length
+                        displayImages.length
                       }`}
                       className="focus:outline-none transition-transform hover:scale-[1.02]"
                       onClick={() => {
@@ -128,13 +168,11 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
                       style={{ background: "none", border: 0, padding: 0 }}
                     >
                       <Image
-                        src={img.signedUrl}
+                        src={img.image_url}
                         alt={spot.title + " image"}
-                        className={`h-40 w-56 object-cover rounded-lg shadow-sm ${
-                          img.is_primary ? "border-4 border-blue-500" : ""
-                        }`}
-                        width={224}
-                        height={160}
+                        className="h-64 w-80 object-cover shadow-sm"
+                        width={320}
+                        height={240}
                       />
                     </button>
                   ) : null
@@ -152,7 +190,7 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
 
           {/* Location information */}
           {address && (
-            <div className="mb-4 flex items-start">
+            <div className="mb-0 px-4 pb-6 flex items-start">
               <MapPin className="h-5 w-5 text-slate-500 mr-2 mt-0.5 flex-shrink-0" />
               <span className="text-slate-700">{address}</span>
             </div>
@@ -160,59 +198,73 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
 
           {/* Parking instructions/description - Important for renters */}
           {spot.description && spot.description.trim() !== "" && (
-            <Alert className="mb-4 bg-amber-50 border-amber-200">
-              <AlertCircle className="h-4 w-4 text-amber-600" />
-              <AlertDescription className="text-amber-800">
-                <span className="font-medium block mb-1">
-                  Parking Instructions:
-                </span>
-                {spot.description}
-              </AlertDescription>
-            </Alert>
+            <div className="mb-0 flex items-start">
+              <Alert className="mb-0 bg-amber-50 rounded-none border-amber-200">
+                <AlertCircle className="h-5 w-5 text-amber-600" />
+                <AlertDescription className="text-amber-800">
+                  <span className="font-medium block mb-0">
+                    Parking Instructions:
+                  </span>
+                  {spot.description}
+                </AlertDescription>
+              </Alert>
+            </div>
           )}
 
           {/* Price information if available */}
           {spot.price_per_day && (
-            <div className="mb-4 p-3 bg-slate-50 rounded-md">
-              <div className="flex justify-between items-center mb-1">
-                <span className="font-medium text-slate-700">Price:</span>
-                <span className="font-bold text-slate-900">
-                  ${spot.price_per_day.toFixed(2)}
-                </span>
-              </div>
-              <div className="flex justify-between items-center text-sm">
-                <span className="text-slate-600">Service fee (3%):</span>
-                <span className="text-slate-600">
-                  ${(spot.price_per_day * 0.03).toFixed(2)}
-                </span>
-              </div>
-              <Separator className="my-2" />
-              <div className="flex justify-between items-center font-medium">
-                <span>Total:</span>
-                <span>${(spot.price_per_day * 1.03).toFixed(2)}</span>
+            <div className="mb-0 px-2 py-4 border-t border-slate-200">
+              <div className="flex flex-col gap-2 sm:flex-row sm:gap-0 sm:justify-between sm:items-stretch bg-slate-50 rounded-lg overflow-hidden shadow-sm">
+                <div className="flex-1 flex flex-col items-center justify-center px-4 py-2 border-b sm:border-b-0 sm:border-r border-slate-200">
+                  <span className="text-xs uppercase tracking-wide text-slate-500 mb-1">
+                    Price per day
+                  </span>
+                  <span className="text-lg font-semibold text-blue-800">
+                    ${spot.price_per_day.toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center px-4 py-2 border-b sm:border-b-0 sm:border-r border-slate-200">
+                  <span className="text-xs uppercase tracking-wide text-slate-500 mb-1">
+                    Service fee
+                  </span>
+                  <span className="text-lg font-medium text-slate-700">
+                    ${(spot.price_per_day * 0.03).toFixed(2)}
+                  </span>
+                </div>
+                <div className="flex-1 flex flex-col items-center justify-center px-4 py-2 bg-gradient-to-r from-green-50 to-white">
+                  <span className="text-xs uppercase tracking-wide text-green-700 mb-1 font-bold">
+                    Total
+                  </span>
+                  <span className="text-xl font-bold text-green-800">
+                    ${(spot.price_per_day * 1.03).toFixed(2)}
+                  </span>
+                </div>
               </div>
             </div>
           )}
 
+          {/* Amenities pill list */}
+          {!isList && (
+            <div className="mt-0 mb-3 px-4 flex flex-wrap gap-2">
+              {amenities.map((name: string, idx: number) => (
+                <Badge key={idx} variant="outline" className="text-sm">
+                  {name}
+                </Badge>
+              ))}
+            </div>
+          )}
+
           {/* Action buttons */}
-          <div
-            className={`flex ${
-              detailView ? "flex-col md:flex-row" : "flex-col"
-            } gap-3 mt-4`}
-          >
-            {detailView ? (
-              <Button
-                variant="default"
-                asChild
-                className={`w-full ${detailView ? "md:w-1/4" : ""}`}
-              >
+          <div className="flex bg-slate-100 px-4 py-6 flex-col gap-2">
+            {!isList ? (
+              <Button variant="default" asChild className="w-full">
                 <Link href={`/dashboard/reviews/create/${booking.id}`}>
                   <Info className="h-4 w-4 mr-2" />
                   Leave a Review
                 </Link>
               </Button>
             ) : (
-              <Button variant="default" asChild className="w-full">
+              <Button variant="default" asChild className="flex w-full">
                 <Link
                   href={
                     isHost
@@ -229,9 +281,7 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
             {!isHost && (
               <Button
                 variant="secondary"
-                className={`w-full ${
-                  detailView ? "md:w-3/4" : ""
-                } bg-green-600 hover:bg-green-700 text-white`}
+                className="w-full flex bg-green-600 hover:bg-green-700 text-white"
                 onClick={() => {
                   if (address) {
                     const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
@@ -252,19 +302,19 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
       </Card>
 
       {/* Image zoom dialog */}
-      {signedImages && signedImages.length > 0 && (
+      {displayImages && displayImages.length > 0 && (
         <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
           <DialogContent className="max-w-3xl flex flex-col items-center p-1 sm:p-4">
             <div className="relative w-full flex flex-col items-center">
               <Image
-                src={signedImages[zoomIdx]?.signedUrl || ""}
+                src={displayImages[zoomIdx]?.image_url || ""}
                 alt={spot.title + ` zoomed image ${zoomIdx + 1}`}
                 width={800}
                 height={600}
                 className="object-contain rounded max-h-[70vh] bg-black"
                 priority
               />
-              {signedImages.length > 1 && (
+              {displayImages.length > 1 && (
                 <div className="absolute inset-0 flex items-center justify-between pointer-events-none">
                   <button
                     type="button"
@@ -273,8 +323,8 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
                     onClick={(e) => {
                       e.stopPropagation();
                       setZoomIdx(
-                        (zoomIdx - 1 + signedImages.length) %
-                          signedImages.length
+                        (zoomIdx - 1 + displayImages.length) %
+                          displayImages.length
                       );
                     }}
                   >
@@ -286,7 +336,7 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
                     className="pointer-events-auto bg-white/80 hover:bg-white text-black rounded-full p-2 m-2 focus:outline-none shadow-md"
                     onClick={(e) => {
                       e.stopPropagation();
-                      setZoomIdx((zoomIdx + 1) % signedImages.length);
+                      setZoomIdx((zoomIdx + 1) % displayImages.length);
                     }}
                   >
                     &#8594;
@@ -294,7 +344,7 @@ const BookingsCard: React.FC<BookingsCardProps> = ({
                 </div>
               )}
               <div className="mt-2 text-sm text-gray-700 bg-white/80 px-3 py-1 rounded-full">
-                Image {zoomIdx + 1} of {signedImages.length}
+                Image {zoomIdx + 1} of {displayImages.length}
               </div>
             </div>
           </DialogContent>

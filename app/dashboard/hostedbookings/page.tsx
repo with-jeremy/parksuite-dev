@@ -1,124 +1,87 @@
-"use client";
-
-import { useEffect, useState } from "react";
-import { useUser } from "@clerk/nextjs";
 import { db } from "@/utils/supabase/client";
 import BookingsCard from "@/app/components/BookingsCard";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/app/components/ui/card";
+import { currentUser } from "@clerk/nextjs/server";
 
-export default function BookingsDashboard() {
-  const { isLoaded, isSignedIn, user } = useUser();
-  const [bookings, setBookings] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [filteredOut, setFilteredOut] = useState<any[]>([]);
+export default async function HostedBookingsPage() {
+  const user = await currentUser();
+  if (!user) return <div>Sign in to view your bookings.</div>;
 
-  useEffect(() => {
-    if (!isLoaded || !isSignedIn || !user) return;
-    setLoading(true);
-    db.from("bookings")
-      .select(
-        "id, booking_date, status, total_price, parking_spot:parking_spot_id(*), user_id"
+  // Fetch bookings for spots owned by the current user, with spot, primary image, and amenities
+  const { data: bookings, error } = await db
+    .from("bookings")
+    .select(
+      `
+      id,
+      booking_date,
+      status,
+      total_price,
+      user_id,
+      parking_spot:parking_spot_id(
+        id,
+        title,
+        address,
+        city,
+        state,
+        description,
+        price_per_day,
+        spaces_available,
+        owner_id,
+        parking_spot_images(image_url,is_primary),
+        parking_spot_amenities(amenities(name))
       )
-      .eq("parking_spot.owner_id", user.id)
-      .gte("booking_date", new Date().toISOString())
-      .order("booking_date", { ascending: true })
-      .limit(6)
-      .then(async ({ data, error }) => {
-        if (error) {
-          setError(error.message);
-          setLoading(false);
-          return;
-        }
-        // Filter out bookings with missing parking_spot, log them
-        const filteredOutBookings = (data || []).filter(
-          (booking) => !booking.parking_spot
-        );
-        setFilteredOut(filteredOutBookings);
-        if (filteredOutBookings.length > 0) {
-          console.warn(
-            "Filtered out bookings with missing parking_spot:",
-            filteredOutBookings
-          );
-        }
-        const bookingsWithSpotInfo = (data || [])
-          .filter((booking) => booking.parking_spot)
-          .map((booking) => ({
-            ...booking,
-            spot: booking.parking_spot,
-          }));
+    `
+    )
+    .gte("booking_date", new Date().toISOString())
+    .order("booking_date", { ascending: true })
+    .limit(6);
 
-        // Fetch images for each booking's parking spot
-        const bookingsWithImagesPromises = bookingsWithSpotInfo.map(
-          async (booking) => {
-            const { data: images } = await db
-              .from("parking_spot_images")
-              .select("image_url, is_primary")
-              .eq("parking_spot_id", booking.spot.id);
+  if (error) return <div className="text-red-500 mb-4">{error.message}</div>;
+  if (!bookings || bookings.length === 0) {
+    return (
+      <div className="p-5 min-h-screen flex flex-col items-center text-white">
+        No bookings found.
+      </div>
+    );
+  }
 
-            let signedImages = [];
-            if (images && images.length > 0) {
-              signedImages = await Promise.all(
-                images.map(async (img) => {
-                  const { data } = await db.storage
-                    .from("parking-spot-images")
-                    .createSignedUrl(
-                      img.image_url.replace(/^.*parking-spot-images\//, ""),
-                      60 * 60
-                    );
-                  return {
-                    signedUrl: data?.signedUrl || null,
-                    is_primary: img.is_primary,
-                  };
-                })
-              );
-            }
-
-            return {
-              ...booking,
-              signedImages,
-            };
-          }
-        );
-
-        const resolvedBookingsWithImages = await Promise.all(
-          bookingsWithImagesPromises
-        );
-        setBookings(resolvedBookingsWithImages);
-        setLoading(false);
-      });
-  }, [isLoaded, isSignedIn, user]);
-
-  if (!isLoaded) return <div>Loading...</div>;
-  if (!isSignedIn || !user) return <div>Sign in to view your bookings.</div>;
+  // Only include bookings where the spot is owned by the current user
+  const mappedBookings = bookings
+    .filter((b: any) => b.parking_spot && b.parking_spot.owner_id === user.id)
+    .map((b: any) => {
+      const spot = b.parking_spot;
+      const images = Array.isArray(spot.parking_spot_images)
+        ? spot.parking_spot_images
+        : [];
+      const primaryImage =
+        images.find((img: any) => img.is_primary) || images[0] || null;
+      const amenities = (spot.parking_spot_amenities || [])
+        .map((a: any) => a.amenities?.name)
+        .filter(Boolean);
+      return {
+        ...b,
+        spot: {
+          ...spot,
+          primaryImage,
+          amenities,
+        },
+      };
+    });
 
   return (
     <div className="p-5 min-h-screen flex flex-col items-center">
       <div className="w-full flex justify-between mb-5 max-w-7xl mx-auto">
         <h1 className="text-3xl font-bold ">Your Bookings</h1>
       </div>
-      {error && <div className="text-red-500 mb-4">{error}</div>}
-      {loading ? (
-        <div className="text-white">Loading bookings...</div>
-      ) : bookings.length === 0 ? (
-        <div className="text-white">No bookings found.</div>
-      ) : (
-        <div className="w-full max-w-7xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {bookings.map((booking) => (
-            <BookingsCard
-              key={booking.id}
-              booking={booking}
-              isHost={true}
-              signedImages={booking.signedImages}
-            />
-          ))}
-        </div>
-      )}
+      <div className="w-full max-w-7xl mx-auto grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 items-start ">
+        {mappedBookings.map((booking: any) => (
+          <BookingsCard
+            key={booking.id}
+            booking={booking}
+            isHost={true}
+            isList={true}
+          />
+        ))}
+      </div>
     </div>
   );
 }
