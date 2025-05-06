@@ -16,15 +16,14 @@ export default function HeroSearchForm() {
 
   return (
     <div className="max-w-xl w-full mx-auto">
-      <h3 className="text-2xl font-bold text-center mb-4">Find your spot</h3>
       <div className="relative flex items-center">
         <input
           id="destination"
           placeholder="Address, city, state, or zip code"
           className="w-full p-4 pr-16 bg-white rounded-full border-2 border-gray-200 shadow-lg focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-200 transition-all"
           value={heroSearch}
-          onChange={e => setHeroSearch(e.target.value)}
-          onKeyDown={e => {
+          onChange={(e) => setHeroSearch(e.target.value)}
+          onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSearch();
             }
