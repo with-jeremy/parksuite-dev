@@ -1,7 +1,6 @@
 import { Abel } from "next/font/google";
 import Image from "next/image";
 import Footer from "@/app/components/Footer";
-
 import { ClerkProvider, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
 
 import Link from "next/link";

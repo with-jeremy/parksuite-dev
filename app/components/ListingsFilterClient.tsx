@@ -1,20 +1,7 @@
 "use client";
 
-import Link from "next/link";
-import { Card, CardHeader, CardTitle, CardContent } from "./ui/card";
-import { useState, useMemo, useEffect } from "react";
-import Image from "next/image";
-import { Badge } from "./ui/badge";
-import { MapPin } from "lucide-react";
-import { db } from "@/utils/supabase/client";
-import ListingsCard from "@/app/components/ListingsCard";
-import {
-  SidebarProvider,
-  Sidebar,
-  SidebarContent,
-  SidebarTrigger,
-} from "@/app/components/ui/sidebar";
-import { useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 
 const PARKING_TYPES = [
   { label: "Driveway", value: "driveway" },
@@ -24,31 +11,44 @@ const PARKING_TYPES = [
 ];
 
 export default function ListingsFilterClient({
-  spots,
-  filterOnly = false,
-  gridOnly = false,
-  initialSearch = "",
+  search,
+  setSearch,
+  selectedTypes,
+  setSelectedTypes,
+  selectedAmenities,
+  setSelectedAmenities,
+  location,
+  setLocation,
+  locating,
+  setLocating,
+  locationError,
+  setLocationError,
+  amenities,
+  amenitiesLoading,
+  amenitiesError,
 }) {
-  const searchParams = useSearchParams();
-  const urlSearch = searchParams?.get("search") || initialSearch;
-  const [search, setSearch] = useState(urlSearch);
-  const [selectedTypes, setSelectedTypes] = useState([]);
-  const [selectedAmenities, setSelectedAmenities] = useState([]);
-  const [amenities, setAmenities] = useState([]);
-  const [amenitiesLoading, setAmenitiesLoading] = useState(true);
-  const [amenitiesError, setAmenitiesError] = useState(null);
-  const [location, setLocation] = useState(null);
-  const [locating, setLocating] = useState(false);
-  const [locationError, setLocationError] = useState(null);
+  // Local state for search input
+  const [inputValue, setInputValue] = useState(search || "");
+  const [showAdvanced, setShowAdvanced] = useState(false);
 
+  // Keep inputValue in sync with search prop (from URL or parent)
   useEffect(() => {
-    setSearch(urlSearch);
-  }, [urlSearch]);
+    setInputValue(search || "");
+  }, [search]);
 
-  // Helper: is search ready (either address or location)
-  const isSearchReady = search.trim().length > 0 || location;
+  // Ensure all types are included by default
+  useEffect(() => {
+    if (!selectedTypes || selectedTypes.length === 0) {
+      setSelectedTypes(PARKING_TYPES.map((t) => t.value));
+    }
+  }, [selectedTypes, setSelectedTypes]);
 
-  // Handler for geolocation
+  const router = useRouter();
+  const pathname = usePathname();
+  const urlSearchParams = useSearchParams();
+
+  const isSearchReady = inputValue.trim().length > 0 || location;
+
   const handleUseLocation = () => {
     setLocating(true);
     setLocationError(null);
@@ -72,214 +72,137 @@ export default function ListingsFilterClient({
     );
   };
 
-  useEffect(() => {
-    async function fetchAmenities() {
-      setAmenitiesLoading(true);
-      setAmenitiesError(null);
-      try {
-        const { data, error } = await db.from("amenities").select("id, name");
-        if (error) throw error;
-        setAmenities(data.map((a) => ({ label: a.name, value: a.id })));
-      } catch (err) {
-        setAmenitiesError("Failed to load amenities");
-      } finally {
-        setAmenitiesLoading(false);
-      }
+  // Only update search when user clicks Search Now or input loses focus
+  const handleSearchSubmit = () => {
+    setSearch(inputValue);
+    // Update the URL param for search
+    const params = new URLSearchParams(urlSearchParams.toString());
+    if (inputValue.trim()) {
+      params.set("search", inputValue.trim());
+    } else {
+      params.delete("search");
     }
-    fetchAmenities();
-  }, []);
+    router.replace(`${pathname}?${params.toString()}`);
+  };
 
-  const getSpotAmenities = (spot) => spot.amenities || [];
-
-  const filteredSpots = useMemo(() => {
-    // Helper to normalize and split text into words (remove punctuation, lowercase)
-    const normalize = (str) =>
-      str
-        ? str
-            .toLowerCase()
-            .replace(/[^\w\s]/g, " ") // remove punctuation
-            .replace(/\s+/g, " ") // collapse whitespace
-            .trim()
-            .split(" ")
-            .filter(Boolean)
-        : [];
-    const searchWords = normalize(search);
-    return spots.filter((spot) => {
-      // Concatenate all searchable fields and normalize
-      const combined = [
-        spot.address,
-        spot.city,
-        spot.state,
-        spot.zip_code,
-        spot.description,
-        spot.title,
-      ]
-        .filter(Boolean)
-        .join(" ");
-      const combinedWords = normalize(combined);
-      // Check if every search word is present in the combined words
-      const matchesSearch = searchWords.every((word) =>
-        combinedWords.includes(word)
-      );
-      const matchesType =
-        selectedTypes.length === 0 || selectedTypes.includes(spot.type);
-      const spotAmenityIds = getSpotAmenities(spot).map((a) => a.id || a);
-      const matchesAmenities =
-        selectedAmenities.length === 0 ||
-        selectedAmenities.every((a) => spotAmenityIds.includes(a));
-      return matchesSearch && matchesType && matchesAmenities;
-    });
-  }, [spots, search, selectedTypes, selectedAmenities]);
-
-  // Filter UI (now just the filter controls, not the container)
-  const filterControls = (
-    <div className="flex flex-col gap-4 p-4 bg-white rounded shadow-md w-full max-w-sm">
-      <h2 className="text-lg font-semibold mb-4">Find Your Parking Spot</h2>
-      <div className="flex-1">
-        <label className="block text-sm font-medium mb-1">
-          Search by address/city/state
-        </label>
+  // Slim, horizontal, 3-column layout
+  return (
+    <div className="w-full max-w-7xl rounded shadow flex flex-col md:flex-row md:items-end gap-2 md:gap-4 px-2 py-2 md:py-0 sticky top-0 z-20 bg-transparent backdrop-blur-md">
+      {/* Search Column */}
+      <div className="flex-1 min-w-[220px] md:pr-2">
         <input
           type="text"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search for parking spots..."
-          className="w-full border rounded px-3 py-2 focus:outline-none focus:ring focus:border-primary"
+          value={inputValue}
+          onChange={(e) => setInputValue(e.target.value)}
+          onBlur={handleSearchSubmit}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              handleSearchSubmit();
+            }
+          }}
+          placeholder="Address, city, or state"
+          className="w-full border rounded px-2 py-1 text-sm focus:outline-none focus:ring focus:border-primary"
         />
-        {/* Use my Location/Search Now button */}
-        <div className="mt-2">
-          {isSearchReady ? (
-            <button
-              className="w-full bg-primary text-white py-2 rounded disabled:opacity-50"
-              disabled={!isSearchReady}
-              onClick={() => {
-                /* Add search logic here later */
-              }}
-            >
-              Search Now
-            </button>
-          ) : (
-            <button
-              className="w-full bg-gray-200 text-gray-800 py-2 rounded flex items-center justify-center gap-2 disabled:opacity-50"
-              onClick={handleUseLocation}
-              disabled={locating}
-              type="button"
-            >
-              {locating ? "Detecting location..." : "Use my Location"}
-            </button>
-          )}
-          {locationError && (
-            <div className="text-xs text-red-500 mt-1">{locationError}</div>
-          )}
+        <div className="mt-2 flex flex-row gap-2">
+          <button
+            className="flex-1 bg-gray-200 text-gray-800 py-1 rounded text-sm flex items-center justify-center gap-2 disabled:opacity-50"
+            onClick={handleUseLocation}
+            disabled={locating}
+            type="button"
+          >
+            {locating ? "Detecting location..." : "Use my Location"}
+          </button>
+          <button
+            className="flex-1 bg-primary text-white py-1 rounded text-sm disabled:opacity-50"
+            disabled={!isSearchReady}
+            onClick={handleSearchSubmit}
+            type="button"
+          >
+            Search Now
+          </button>
         </div>
+        {locationError && (
+          <div className="text-xs text-red-500 mt-1">{locationError}</div>
+        )}
+        <button
+          className="mt-2 text-xs underline text-primary"
+          type="button"
+          onClick={() => setShowAdvanced((prev) => !prev)}
+        >
+          {showAdvanced ? "Hide Advanced Search" : "Show Advanced Search"}
+        </button>
       </div>
-      <div>
-        <label className="block text-sm font-semibold mb-1">
-          Filter by Parking Type
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {PARKING_TYPES.map((type) => (
-            <label key={type.value} className="flex items-center gap-1 text-sm">
-              <input
-                type="checkbox"
-                checked={selectedTypes.includes(type.value)}
-                onChange={(e) => {
-                  setSelectedTypes((prev) =>
-                    e.target.checked
-                      ? [...prev, type.value]
-                      : prev.filter((t) => t !== type.value)
-                  );
-                }}
-              />
-              {type.label}
+      {/* Advanced Search (Collapsible) */}
+      {showAdvanced && (
+        <div className="w-full md:w-auto flex flex-col md:flex-row gap-2 md:gap-4 mt-2 md:mt-0">
+          {/* Parking Type Column */}
+          <div className="flex-1 min-w-[180px] md:px-2">
+            <label className="block text-xs font-semibold mb-1">
+              Parking Types Allowed
             </label>
-          ))}
-        </div>
-      </div>
-      <div>
-        <label className="block text-sm font-semibold mb-1">
-          Filter by Amenities
-        </label>
-        <div className="flex flex-wrap gap-2">
-          {amenitiesLoading ? (
-            <span className="text-gray-400">Loading amenities...</span>
-          ) : amenitiesError ? (
-            <span className="text-red-500">{amenitiesError}</span>
-          ) : amenities.length === 0 ? (
-            <span className="text-gray-400">No amenities found</span>
-          ) : (
-            amenities.map((amenity) => (
-              <label
-                key={amenity.value}
-                className="flex items-center gap-1 text-sm"
-              >
-                <input
-                  type="checkbox"
-                  checked={selectedAmenities.includes(amenity.value)}
-                  onChange={(e) => {
-                    setSelectedAmenities((prev) =>
-                      e.target.checked
-                        ? [...prev, amenity.value]
-                        : prev.filter((a) => a !== amenity.value)
-                    );
-                  }}
-                />
-                {amenity.label}
-              </label>
-            ))
-          )}
-        </div>
-      </div>
-    </div>
-  );
-
-  // Listings grid UI
-  const gridUI = (
-    <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-      {filteredSpots.length === 0 && (
-        <div className="col-span-full text-center text-muted-foreground py-12">
-          No spots found matching your criteria.
+            <div className="flex flex-wrap gap-1">
+              {PARKING_TYPES.map((type) => (
+                <label
+                  key={type.value}
+                  className="flex items-center gap-1 text-xs font-normal bg-gray-100 rounded px-2 py-1"
+                >
+                  <input
+                    type="checkbox"
+                    checked={selectedTypes.includes(type.value)}
+                    onChange={(e) => {
+                      setSelectedTypes((prev) =>
+                        e.target.checked
+                          ? [...prev, type.value]
+                          : prev.filter((t) => t !== type.value)
+                      );
+                    }}
+                  />
+                  {type.label}
+                </label>
+              ))}
+            </div>
+          </div>
+          {/* Amenities Column */}
+          <div className="flex-1 min-w-[180px] md:pl-2">
+            <label className="block text-xs font-semibold mb-1">
+              Amenities Required
+            </label>
+            <div className="flex flex-wrap gap-1">
+              {amenitiesLoading ? (
+                <span className="text-gray-400 text-xs">
+                  Loading amenities...
+                </span>
+              ) : amenitiesError ? (
+                <span className="text-red-500 text-xs">{amenitiesError}</span>
+              ) : amenities.length === 0 ? (
+                <span className="text-gray-400 text-xs">
+                  No amenities found
+                </span>
+              ) : (
+                amenities.map((amenity) => (
+                  <label
+                    key={amenity.value}
+                    className="flex items-center gap-1 text-xs font-normal bg-gray-100 rounded px-2 py-1"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedAmenities.includes(amenity.value)}
+                      onChange={(e) => {
+                        setSelectedAmenities((prev) =>
+                          e.target.checked
+                            ? [...prev, amenity.value]
+                            : prev.filter((a) => a !== amenity.value)
+                        );
+                      }}
+                    />
+                    {amenity.label}
+                  </label>
+                ))
+              )}
+            </div>
+          </div>
         </div>
       )}
-      {filteredSpots.map((spot) => (
-        <Link key={spot.id} href={`/listings/${spot.id}`} className="group">
-          <ListingsCard spot={spot} isList={true} />
-        </Link>
-      ))}
     </div>
-  );
-
-  if (filterOnly) {
-    // Show only the sidebar with filter controls
-    return (
-      <SidebarProvider>
-        <div className="fixed top-4 left-4 z-30">
-          <SidebarTrigger />
-        </div>
-        <Sidebar variant="sidebar" collapsible="offcanvas">
-          <SidebarContent>{filterControls}</SidebarContent>
-        </Sidebar>
-      </SidebarProvider>
-    );
-  }
-  if (gridOnly) return gridUI;
-
-  // Default: both (sidebar + grid)
-  return (
-    <SidebarProvider>
-      <div className="flex w-full min-h-svh">
-        {/* SidebarTrigger always visible, not just on mobile */}
-        <div className="fixed top-12 left-4 z-30">
-          <SidebarTrigger />
-        </div>
-        <Sidebar variant="floating" collapsible="offcanvas">
-          <SidebarContent>
-            <div className="pt-28">{filterControls}</div>
-          </SidebarContent>
-        </Sidebar>
-        {/* Main content (grid) */}
-        <main className="flex-1 p-4">{gridUI}</main>
-      </div>
-    </SidebarProvider>
   );
 }

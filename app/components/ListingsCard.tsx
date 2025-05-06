@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import BookingForm from "./BookingForm";
 import { Button } from "@/app/components/ui/button";
@@ -44,6 +44,22 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, isList }) => {
     .filter((a: any) => a && a.name)
     .map((a: any) => a.name);
 
+  // --- Image zoom keyboard navigation ---
+  useEffect(() => {
+    if (!zoomOpen) return;
+    const handleKey = (e: KeyboardEvent) => {
+      if (e.key === "ArrowRight") {
+        setZoomIdx((prev) => (prev + 1) % (images.length || 1));
+      } else if (e.key === "ArrowLeft") {
+        setZoomIdx(
+          (prev) => (prev - 1 + (images.length || 1)) % (images.length || 1)
+        );
+      }
+    };
+    window.addEventListener("keydown", handleKey);
+    return () => window.removeEventListener("keydown", handleKey);
+  }, [zoomOpen, images.length]);
+
   const handleBookNow = () => {
     console.log("Book Now clicked");
 
@@ -77,21 +93,31 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, isList }) => {
         </div>
       ) : (
         <div className="w-full flex flex-row md:flex-row gap-2">
-          {[0, 1, 2].map((idx) => (
-            <div
-              key={idx}
-              className="flex-1 relative overflow-hidden flex items-center justify-center"
-            >
-              <Image
-                src={images[idx]?.image_url || "/file.svg"}
-                alt={spot.title}
-                width={300}
-                height={200}
-                className="object-contain transition-transform group-hover:scale-105"
-                priority
-              />
-            </div>
-          ))}
+          {images.slice(0, 3).map(
+            (img, idx) =>
+              img?.image_url && (
+                <button
+                  key={idx}
+                  type="button"
+                  aria-label={`View image ${idx + 1} of ${images.length}`}
+                  className="focus:outline-none transition-transform hover:scale-[1.02] flex-1 relative overflow-hidden flex items-center justify-center"
+                  onClick={() => {
+                    setZoomIdx(idx);
+                    setZoomOpen(true);
+                  }}
+                  style={{ background: "none", border: 0, padding: 0 }}
+                >
+                  <Image
+                    src={img.image_url}
+                    alt={spot.title}
+                    width={300}
+                    height={200}
+                    className="object-contain transition-transform group-hover:scale-105"
+                    priority
+                  />
+                </button>
+              )
+          )}
         </div>
       )}
       <CardContent className="p-4">
@@ -167,6 +193,52 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, isList }) => {
           </div>
         )}
       </CardContent>
+      {/* Image zoom dialog */}
+      {images && images.length > 0 && !isList && (
+        <Dialog open={zoomOpen} onOpenChange={setZoomOpen}>
+          <DialogContent className="max-w-3xl flex flex-col items-center p-1 sm:p-4">
+            <div className="relative w-full flex flex-col items-center">
+              <Image
+                src={images[zoomIdx]?.image_url || ""}
+                alt={spot.title + ` zoomed image ${zoomIdx + 1}`}
+                width={800}
+                height={600}
+                className="object-contain rounded max-h-[70vh] bg-black"
+                priority
+              />
+              {images.length > 1 && (
+                <div className="absolute inset-0 flex items-center justify-between pointer-events-none">
+                  <button
+                    type="button"
+                    aria-label="Previous image"
+                    className="pointer-events-auto bg-white/80 hover:bg-white text-black rounded-full p-2 m-2 focus:outline-none shadow-md"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomIdx((zoomIdx - 1 + images.length) % images.length);
+                    }}
+                  >
+                    &#8592;
+                  </button>
+                  <button
+                    type="button"
+                    aria-label="Next image"
+                    className="pointer-events-auto bg-white/80 hover:bg-white text-black rounded-full p-2 m-2 focus:outline-none shadow-md"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setZoomIdx((zoomIdx + 1) % images.length);
+                    }}
+                  >
+                    &#8594;
+                  </button>
+                </div>
+              )}
+              <div className="mt-2 text-sm text-gray-700 bg-white/80 px-3 py-1 rounded-full">
+                Image {zoomIdx + 1} of {images.length}
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </Card>
   );
 
