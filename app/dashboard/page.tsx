@@ -1,12 +1,19 @@
 "use client";
 
-import { useUser } from '@clerk/nextjs';
-import { useEffect, useState } from 'react';
-import { db } from '@/utils/supabase/client';
-import { Calendar, Car, MapPin, CreditCard } from 'lucide-react';
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from '../components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import Link from 'next/link';
+import { useUser } from "@clerk/nextjs";
+import { useEffect, useState } from "react";
+import { db } from "@/utils/supabase/client";
+import { Calendar, Car, MapPin, CreditCard } from "lucide-react";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from "../components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import Link from "next/link";
 
 export default function DashboardPage() {
   const { user, isLoaded } = useUser();
@@ -20,17 +27,21 @@ export default function DashboardPage() {
     if (!isLoaded || !user) return;
     const dateToday = new Date();
     // Fetch upcoming bookings (as renter)
-    db.from('bookings')
-      .select('id, booking_date, parking_spots (id, title, city, state, owner_id)')
-      .eq('user_id', user.id)
-      .gte('booking_date', dateToday.toISOString())
-      .order('booking_date', { ascending: true })
+    db.from("bookings")
+      .select(
+        "id, booking_date, parking_spots (id, title, city, state, owner_id)"
+      )
+      .eq("user_id", user.id)
+      .gte("booking_date", dateToday.toISOString())
+      .order("booking_date", { ascending: true })
       .then(({ data }) => setUpcomingRentalBookings(data || []));
     // Fetch all upcoming bookings, then filter for hosted bookings (as host)
-    db.from('bookings')
-      .select('id, booking_date, parking_spots (id, title, city, state, owner_id)')
-      .gte('booking_date', dateToday.toISOString())
-      .order('booking_date', { ascending: true })
+    db.from("bookings")
+      .select(
+        "id, booking_date, parking_spots (id, title, city, state, owner_id)"
+      )
+      .gte("booking_date", dateToday.toISOString())
+      .order("booking_date", { ascending: true })
       .then(({ data }) => {
         const hosted = (data || []).filter(
           (booking) => booking.parking_spots?.owner_id === user.id
@@ -38,31 +49,31 @@ export default function DashboardPage() {
         setUpcomingHostedBookings(hosted);
       });
     // Fetch host listings (parking spots)
-    db.from('parking_spots')
-      .select('id, title, is_active')
-      .eq('owner_id', user.id)
+    db.from("parking_spots")
+      .select("id, title, is_active")
+      .eq("owner_id", user.id)
       .then(({ data }) => {
         setHostListings(data || []);
-    // Fetch earnings_payments for this user with status 'earned'
-    db.from('earnings_payments')
-      .select('amount')
-      .eq('user_id', user.id)
-      .then(({ data: earnings, error }) => {
-        if (error || !earnings) {
-          setHostEarnings(0);
-          return;
-        }
-        let total = 0;
-        for (const e of earnings) {
-          total += e.amount || 0;
-        }
-        setHostEarnings(total);
-      });
-    // Fetch all-time bookings as host
-    db.from('bookings')
-      .select('id, parking_spots (owner_id)')
-      .eq('parking_spots.owner_id', user.id)
-      .then(({ data }) => setHostAllTimeBookings(data || []));
+        // Fetch earnings_payments for this user with status 'earned'
+        db.from("earnings_payments")
+          .select("amount")
+          .eq("user_id", user.id)
+          .then(({ data: earnings, error }) => {
+            if (error || !earnings) {
+              setHostEarnings(0);
+              return;
+            }
+            let total = 0;
+            for (const e of earnings) {
+              total += e.amount || 0;
+            }
+            setHostEarnings(total);
+          });
+        // Fetch all-time bookings as host
+        db.from("bookings")
+          .select("id, parking_spots (owner_id)")
+          .eq("parking_spots.owner_id", user.id)
+          .then(({ data }) => setHostAllTimeBookings(data || []));
       });
   }, [isLoaded, user]);
 
@@ -72,7 +83,9 @@ export default function DashboardPage() {
   return (
     <div className="p-5 min-h-screen flex flex-col items-center">
       <h1 className="text-3xl font-bold mb-2">User Dashboard</h1>
-      <h2 className="text-xl font-medium mb-5 text-gray-600">Hello, {user.firstName}</h2>
+      <h2 className="text-xl font-medium mb-5 text-gray-600">
+        Hello, {user.firstName}
+      </h2>
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4 w-full max-w-6xl">
         {/* Find Parking Card (1st) */}
         <Card>
@@ -81,7 +94,9 @@ export default function DashboardPage() {
             <MapPin className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <p className="text-sm text-muted-foreground">Search for parking spots near your destination</p>
+            <p className="text-sm text-muted-foreground">
+              Search for parking spots near your destination
+            </p>
             <Button className="w-full mt-4" asChild>
               <Link href="/listings">Browse Listings</Link>
             </Button>
@@ -90,25 +105,30 @@ export default function DashboardPage() {
         {/* Upcoming Bookings Card (2nd) */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Upcoming Bookings</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Upcoming Bookings
+            </CardTitle>
             <Calendar className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="flex flex-row justify-between items-center gap-6">
               <div className="flex flex-col items-center flex-1">
-                <div className="text-2xl font-bold">{upcomingRentalBookings?.length || 0}</div>
+                <div className="text-2xl font-bold">
+                  {upcomingRentalBookings?.length || 0}
+                </div>
                 <p className="text-xs text-muted-foreground">Rental Bookings</p>
                 <Button size="sm" className="mt-4" asChild>
-              <Link href="/dashboard/bookings">View All</Link>
-            </Button>
+                  <Link href="/dashboard/rentedbookings">View All</Link>
+                </Button>
               </div>
               <div className="flex flex-col items-center flex-1 border-l pl-6">
                 <div className="text-2xl font-bold">
-                  {upcomingHostedBookings?.length || 0}</div>
+                  {upcomingHostedBookings?.length || 0}
+                </div>
                 <p className="text-xs text-muted-foreground">Hosted Bookings</p>
                 <Button size="sm" className="mt-4" asChild>
-              <Link href="/dashboard/bookings">View All</Link>
-            </Button>
+                  <Link href="/dashboard/hostedbookings">View All</Link>
+                </Button>
               </div>
             </div>
           </CardContent>
@@ -117,18 +137,28 @@ export default function DashboardPage() {
         {hostListings && hostListings.length > 0 ? (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Your Listings</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Your Listings
+              </CardTitle>
               <Car className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="flex flex-row justify-between items-center gap-6">
                 <div className="flex flex-col items-center flex-1">
-                  <div className="text-2xl font-bold text-center">{hostListings?.length || 0}</div>
-                  <p className="text-xs text-muted-foreground text-center">Active Listings</p>
+                  <div className="text-2xl font-bold text-center">
+                    {hostListings?.length || 0}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    Active Listings
+                  </p>
                 </div>
                 <div className="flex flex-col items-center flex-1 border-l pl-6">
-                  <div className="text-2xl font-bold text-center">{hostAllTimeBookings.length}</div>
-                  <p className="text-xs text-muted-foreground text-center">All-Time Bookings</p>
+                  <div className="text-2xl font-bold text-center">
+                    {hostAllTimeBookings.length}
+                  </div>
+                  <p className="text-xs text-muted-foreground text-center">
+                    All-Time Bookings
+                  </p>
                 </div>
               </div>
               <Button size="sm" className="mt-4 w-full" asChild>
@@ -139,11 +169,15 @@ export default function DashboardPage() {
         ) : (
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Become a Host</CardTitle>
+              <CardTitle className="text-sm font-medium">
+                Become a Host
+              </CardTitle>
               <Car className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <p className="text-sm text-muted-foreground">Earn money by renting out your parking space</p>
+              <p className="text-sm text-muted-foreground">
+                Earn money by renting out your parking space
+              </p>
               <Button size="sm" className="mt-4 w-full" asChild>
                 <Link href="/host">Learn More</Link>
               </Button>
@@ -171,9 +205,13 @@ export default function DashboardPage() {
           <CardHeader>
             <CardTitle>Upcoming Parking Reservations</CardTitle>
             <CardDescription>
-              <div className="text-sm mb-4 text-muted-foreground">Your next parking spots!</div>
+              <div className="text-sm mb-4 text-muted-foreground">
+                Your next parking spots!
+              </div>
               <Button>
-                <Link href="/dashboard/rentedbookings">View All Rented Bookings</Link>
+                <Link href="/dashboard/rentedbookings">
+                  View All Rented Bookings
+                </Link>
               </Button>
             </CardDescription>
           </CardHeader>
@@ -186,9 +224,12 @@ export default function DashboardPage() {
                     className="flex justify-between items-center border-b pb-4 last:border-0 last:pb-0"
                   >
                     <div>
-                      <p className="font-medium">{booking.parking_spots?.title}</p>
+                      <p className="font-medium">
+                        {booking.parking_spots?.title}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {booking.parking_spots?.city}, {booking.parking_spots?.state} •{' '}
+                        {booking.parking_spots?.city},{" "}
+                        {booking.parking_spots?.state} •{" "}
                         {new Date(booking.booking_date).toLocaleDateString()}
                       </p>
                     </div>
@@ -201,12 +242,20 @@ export default function DashboardPage() {
                     <button
                       className="inline-flex items-center px-3 py-1.5 text-sm font-medium bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
                       onClick={() => {
-                        const address = [booking.parking_spots.address, booking.parking_spots.city, booking.parking_spots.state].filter(Boolean).join(", ");
+                        const address = [
+                          booking.parking_spots.address,
+                          booking.parking_spots.city,
+                          booking.parking_spots.state,
+                        ]
+                          .filter(Boolean)
+                          .join(", ");
                         if (address) {
-                          const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}`;
-                          window.open(url, '_blank');
+                          const url = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(
+                            address
+                          )}`;
+                          window.open(url, "_blank");
                         } else {
-                          alert('No address available for directions.');
+                          alert("No address available for directions.");
                         }
                       }}
                       type="button"
@@ -227,14 +276,18 @@ export default function DashboardPage() {
           </CardContent>
         </Card>
         {/* Your Listings (right) */}
-         {/* Upcoming Bookings (left) */}
-         <Card>
+        {/* Upcoming Bookings (left) */}
+        <Card>
           <CardHeader>
             <CardTitle>Upcoming Hosted Bookings</CardTitle>
             <CardDescription>
-              <div className="text-sm mb-4 text-muted-foreground">Your next parking guests!</div>
+              <div className="text-sm mb-4 text-muted-foreground">
+                Your next parking guests!
+              </div>
               <Button>
-                <Link href="/dashboard/hostedbookings">View All Hosted Bookings</Link>
+                <Link href="/dashboard/hostedbookings">
+                  View All Hosted Bookings
+                </Link>
               </Button>
             </CardDescription>
           </CardHeader>
@@ -247,9 +300,12 @@ export default function DashboardPage() {
                     className="flex justify-between items-center border-b pb-4 last:border-0 last:pb-0"
                   >
                     <div>
-                      <p className="font-medium">{booking.parking_spots?.title}</p>
+                      <p className="font-medium">
+                        {booking.parking_spots?.title}
+                      </p>
                       <p className="text-sm text-muted-foreground">
-                        {booking.parking_spots?.city}, {booking.parking_spots?.state} •{' '}
+                        {booking.parking_spots?.city},{" "}
+                        {booking.parking_spots?.state} •{" "}
                         {new Date(booking.booking_date).toLocaleDateString()}
                       </p>
                     </div>

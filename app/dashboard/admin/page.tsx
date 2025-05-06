@@ -1,13 +1,27 @@
 // Admin Dashboard Page
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { startOfDay, subDays } from 'date-fns';
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/app/components/ui/card';
-import { Button } from '@/app/components/ui/button';
-import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell, TableCaption } from '@/app/components/ui/table';
-import { Users, Home, CalendarCheck, PiggyBank } from 'lucide-react';
-import { db } from '@/utils/supabase/client';
+import { useState, useEffect } from "react";
+import { startOfDay, subDays } from "date-fns";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardDescription,
+} from "@/app/components/ui/card";
+import { Button } from "@/app/components/ui/button";
+import {
+  Table,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableHead,
+  TableCell,
+  TableCaption,
+} from "@/app/components/ui/table";
+import { Users, Home, CalendarCheck, PiggyBank } from "lucide-react";
+import { db } from "@/utils/supabase/client";
 
 // Table components for each card (stubbed, fetch on demand)
 function ListingsTable({ data }: { data: any[] }) {
@@ -27,12 +41,14 @@ function ListingsTable({ data }: { data: any[] }) {
       <TableBody>
         {data.map((row) => (
           <TableRow key={row.id}>
-            <TableCell>{row.user_name || '-'}</TableCell>
+            <TableCell>{row.user_name || "-"}</TableCell>
             <TableCell>{row.title}</TableCell>
             <TableCell>{row.address}</TableCell>
             <TableCell>{row.city}</TableCell>
             <TableCell>{row.state}</TableCell>
-            <TableCell>{row.pending || 0}/{row.completed || 0}</TableCell>
+            <TableCell>
+              {row.pending || 0}/{row.completed || 0}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -56,8 +72,8 @@ function BookingsTable({ data }: { data: any[] }) {
       <TableBody>
         {data.map((row) => (
           <TableRow key={row.id}>
-            <TableCell>{row.user_name || '-'}</TableCell>
-            <TableCell>{row.spot_title || '-'}</TableCell>
+            <TableCell>{row.user_name || "-"}</TableCell>
+            <TableCell>{row.spot_title || "-"}</TableCell>
             <TableCell>{row.booking_date}</TableCell>
             <TableCell>{row.status}</TableCell>
             <TableCell>${row.total_price?.toFixed(2)}</TableCell>
@@ -75,22 +91,48 @@ function EarningsTable({ data }: { data: any[] }) {
       <TableHeader>
         <TableRow>
           <TableHead>User</TableHead>
-          <TableHead>Booking ID</TableHead>
-          <TableHead>Total Price</TableHead>
-          <TableHead>Payout</TableHead>
-          <TableHead>Status</TableHead>
-          <TableHead>Date</TableHead>
+          <TableHead>Client Price</TableHead>
+          <TableHead>Listed Price</TableHead>
+          <TableHead>Host Payout</TableHead>
+          <TableHead>App Earnings</TableHead>
+          <TableHead>Date Booked</TableHead>
+          <TableHead>Booking Date</TableHead>
         </TableRow>
       </TableHeader>
       <TableBody>
         {data.map((row) => (
           <TableRow key={row.id}>
-            <TableCell>{row.user_name || '-'}</TableCell>
-            <TableCell>{row.booking_id}</TableCell>
-            <TableCell>{row.total_price !== undefined ? `$${row.total_price?.toFixed(2)}` : '-'}</TableCell>
-            <TableCell>${row.amount?.toFixed(2)}</TableCell>
-            <TableCell>{row.status}</TableCell>
-            <TableCell>{row.created_at ? new Date(row.created_at).toLocaleDateString() : '-'}</TableCell>
+            <TableCell>{row.user_name || "-"}</TableCell>
+            <TableCell>
+              {row.client_price !== undefined
+                ? `$${row.client_price?.toFixed(2)}`
+                : "-"}
+            </TableCell>
+            <TableCell>
+              {row.listed_price !== undefined
+                ? `$${row.listed_price?.toFixed(2)}`
+                : "-"}
+            </TableCell>
+            <TableCell>
+              {row.host_payout !== undefined
+                ? `$${row.host_payout?.toFixed(2)}`
+                : "-"}
+            </TableCell>
+            <TableCell>
+              {row.app_earnings !== undefined
+                ? `$${row.app_earnings?.toFixed(2)}`
+                : "-"}
+            </TableCell>
+            <TableCell>
+              {row.date_booked
+                ? new Date(row.date_booked).toLocaleDateString()
+                : "-"}
+            </TableCell>
+            <TableCell>
+              {row.booking_date
+                ? new Date(row.booking_date).toLocaleDateString()
+                : "-"}
+            </TableCell>
           </TableRow>
         ))}
       </TableBody>
@@ -99,7 +141,9 @@ function EarningsTable({ data }: { data: any[] }) {
 }
 
 export default function AdminDashboard() {
-  const [active, setActive] = useState<'users' | 'listings' | 'bookings' | 'earnings' | null>(null);
+  const [active, setActive] = useState<
+    "users" | "listings" | "bookings" | "earnings" | null
+  >(null);
   const [loading, setLoading] = useState(false);
   const [tableData, setTableData] = useState<any[]>([]);
   // Placeholder counts (would be fetched in real app)
@@ -107,37 +151,56 @@ export default function AdminDashboard() {
     users: { new: 0, total: 0 },
     listings: { new: 0, total: 0 },
     bookings: { new: 0, total: 0 },
-    earnings: { paidIn: 0, paidOut: 0, app: 0, paidInCount: 0, paidOutCount: 0 },
+    earnings: {
+      paidIn: 0,
+      paidOut: 0,
+      app: 0,
+      paidInCount: 0,
+      paidOutCount: 0,
+    },
   });
 
   // Fetch summary counts on mount
   useEffect(() => {
     async function fetchCounts() {
-      const now = new Date('2025-04-21T00:00:00');
+      const now = new Date("2025-04-21T00:00:00");
       const lastWeek = subDays(startOfDay(now), 7).toISOString();
       // Users
-      const { data: allUsers } = await db.from('users').select('id,created_at');
-      const usersNew = (allUsers || []).filter(u => u.created_at && u.created_at >= lastWeek).length;
+      const { data: allUsers } = await db.from("users").select("id,created_at");
+      const usersNew = (allUsers || []).filter(
+        (u) => u.created_at && u.created_at >= lastWeek
+      ).length;
       const usersTotal = (allUsers || []).length;
       // Listings
-      const { data: allListings } = await db.from('parking_spots').select('id,created_at');
-      const listingsNew = (allListings || []).filter(l => l.created_at && l.created_at >= lastWeek).length;
+      const { data: allListings } = await db
+        .from("parking_spots")
+        .select("id,created_at");
+      const listingsNew = (allListings || []).filter(
+        (l) => l.created_at && l.created_at >= lastWeek
+      ).length;
       const listingsTotal = (allListings || []).length;
       // Bookings
-      const { data: allBookings } = await db.from('bookings').select('id,created_at');
-      const bookingsNew = (allBookings || []).filter(b => b.created_at && b.created_at >= lastWeek).length;
+      const { data: allBookings } = await db
+        .from("bookings")
+        .select("id,created_at");
+      const bookingsNew = (allBookings || []).filter(
+        (b) => b.created_at && b.created_at >= lastWeek
+      ).length;
       const bookingsTotal = (allBookings || []).length;
       // Earnings: use the same join as the table
       const { data: earnings } = await db
-        .from('earnings_payments')
-        .select('amount, booking:booking_id(total_price)');
-      let paidIn = 0, paidInCount = 0, paidOut = 0, paidOutCount = 0;
-      (earnings || []).forEach(e => {
+        .from("earnings_payments")
+        .select("amount, booking:booking_id(total_price)");
+      let paidIn = 0,
+        paidInCount = 0,
+        paidOut = 0,
+        paidOutCount = 0;
+      (earnings || []).forEach((e) => {
         if (e.booking?.total_price) {
           paidIn += e.booking.total_price;
           paidInCount++;
         }
-        if (typeof e.amount === 'number') {
+        if (typeof e.amount === "number") {
           paidOut += e.amount;
           paidOutCount++;
         }
@@ -160,7 +223,7 @@ export default function AdminDashboard() {
 
   // Helper to render summary cards for each category
   function renderCategoryCards() {
-    if (active === 'users') {
+    if (active === "users") {
       return (
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
@@ -183,7 +246,7 @@ export default function AdminDashboard() {
           </Card>
         </div>
       );
-    } else if (active === 'listings') {
+    } else if (active === "listings") {
       return (
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
@@ -206,7 +269,7 @@ export default function AdminDashboard() {
           </Card>
         </div>
       );
-    } else if (active === 'bookings') {
+    } else if (active === "bookings") {
       return (
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
@@ -229,25 +292,31 @@ export default function AdminDashboard() {
           </Card>
         </div>
       );
-    } else if (active === 'earnings') {
+    } else if (active === "earnings") {
       return (
         <div className="grid grid-cols-3 gap-4 mb-6">
           <Card>
             <CardHeader>
               <CardTitle>Paid In</CardTitle>
-              <CardDescription>${counts.earnings.paidIn} ({counts.earnings.paidInCount})</CardDescription>
+              <CardDescription>
+                ${counts.earnings.paidIn} ({counts.earnings.paidInCount})
+              </CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
               <CardTitle>Paid Out</CardTitle>
-              <CardDescription>${counts.earnings.paidOut} ({counts.earnings.paidOutCount})</CardDescription>
+              <CardDescription>
+                ${counts.earnings.paidOut} ({counts.earnings.paidOutCount})
+              </CardDescription>
             </CardHeader>
           </Card>
           <Card>
             <CardHeader>
               <CardTitle>App Earnings</CardTitle>
-              <CardDescription>${counts.earnings.app}</CardDescription>
+              <CardDescription>
+                ${counts.earnings.app.toFixed(2)}
+              </CardDescription>
             </CardHeader>
           </Card>
         </div>
@@ -257,41 +326,56 @@ export default function AdminDashboard() {
   }
 
   // Fetch data for each card on click
-  async function handleCardClick(type: 'users' | 'listings' | 'bookings' | 'earnings') {
+  async function handleCardClick(
+    type: "users" | "listings" | "bookings" | "earnings"
+  ) {
     setActive(type);
     setLoading(true);
-    if (type === 'listings') {
+    if (type === "listings") {
       // Fetch all parking spots with user and booking counts
-      const { data: spots } = await db.from('parking_spots').select('*');
+      const { data: spots } = await db.from("parking_spots").select("*");
       // Simulate user_name and booking counts (replace with real joins in production)
       const rows = (spots || []).map((s: any) => ({
         ...s,
-        user_name: 'User', // Placeholder
+        user_name: "User", // Placeholder
         pending: Math.floor(Math.random() * 3),
         completed: Math.floor(Math.random() * 10),
       }));
       setTableData(rows);
-    } else if (type === 'bookings') {
+    } else if (type === "bookings") {
       // Fetch all bookings with user and spot info
-      const { data: bookings } = await db.from('bookings').select('*');
+      const { data: bookings } = await db.from("bookings").select("*");
       const rows = (bookings || []).map((b: any) => ({
         ...b,
-        user_name: 'User', // Placeholder
-        spot_title: 'Spot', // Placeholder
+        user_name: "User", // Placeholder
       }));
       setTableData(rows);
-    } else if (type === 'earnings') {
+    } else if (type === "earnings") {
       // Fetch all earnings_payments and join booking.total_price
       const { data: earnings } = await db
-        .from('earnings_payments')
-        .select('*, booking:booking_id(total_price)');
-      const rows = (earnings || []).map((e: any) => ({
-        ...e,
-        user_name: 'User', // Placeholder
-        total_price: e.booking?.total_price,
-      }));
+        .from("earnings_payments")
+        .select(
+          "*, booking:booking_id(total_price, booking_date, created_at, price_per_day)"
+        );
+      const rows = (earnings || []).map((e: any) => {
+        const client_price = e.booking?.total_price;
+        const host_payout = e.amount;
+        return {
+          ...e,
+          user_name: "User", // Placeholder
+          client_price,
+          listed_price: e.booking?.price_per_day,
+          host_payout,
+          app_earnings:
+            typeof client_price === "number" && typeof host_payout === "number"
+              ? client_price - host_payout
+              : undefined,
+          booking_date: e.booking?.booking_date,
+          date_booked: e.booking?.created_at,
+        };
+      });
       setTableData(rows);
-    } else if (type === 'users') {
+    } else if (type === "users") {
       // Placeholder: no user table yet
       setTableData([]);
     }
@@ -309,11 +393,19 @@ export default function AdminDashboard() {
               <Users className="h-8 w-8 text-blue-600" />
               <div>
                 <CardTitle>User Management</CardTitle>
-                <CardDescription className="mt-2">New: {counts.users.new} | Total: {counts.users.total}</CardDescription>
+                <CardDescription className="mt-2">
+                  New: {counts.users.new} | Total: {counts.users.total}
+                </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              <Button variant="secondary" className="w-full" onClick={() => handleCardClick('users')}>View Users</Button>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => handleCardClick("users")}
+              >
+                View Users
+              </Button>
             </CardContent>
           </Card>
           <Card>
@@ -321,11 +413,19 @@ export default function AdminDashboard() {
               <Home className="h-8 w-8 text-green-600" />
               <div>
                 <CardTitle>Listings</CardTitle>
-                <CardDescription className="mt-2">New: {counts.listings.new} | Total: {counts.listings.total}</CardDescription>
+                <CardDescription className="mt-2">
+                  New: {counts.listings.new} | Total: {counts.listings.total}
+                </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              <Button variant="secondary" className="w-full" onClick={() => handleCardClick('listings')}>View Listings</Button>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => handleCardClick("listings")}
+              >
+                View Listings
+              </Button>
             </CardContent>
           </Card>
           <Card>
@@ -333,11 +433,19 @@ export default function AdminDashboard() {
               <CalendarCheck className="h-8 w-8 text-yellow-600" />
               <div>
                 <CardTitle>Bookings</CardTitle>
-                <CardDescription className="mt-2">New: {counts.bookings.new} | Total: {counts.bookings.total}</CardDescription>
+                <CardDescription className="mt-2">
+                  New: {counts.bookings.new} | Total: {counts.bookings.total}
+                </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              <Button variant="secondary" className="w-full" onClick={() => handleCardClick('bookings')}>View Bookings</Button>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => handleCardClick("bookings")}
+              >
+                View Bookings
+              </Button>
             </CardContent>
           </Card>
           <Card>
@@ -346,12 +454,21 @@ export default function AdminDashboard() {
               <div>
                 <CardTitle>Earnings</CardTitle>
                 <CardDescription className="mt-2">
-                  In: ${counts.earnings.paidIn} ({counts.earnings.paidInCount}) / Out: ${counts.earnings.paidOut} ({counts.earnings.paidOutCount}) / App: ${counts.earnings.app}
+                  In: ${counts.earnings.paidIn} ({counts.earnings.paidInCount})
+                  / Out: ${counts.earnings.paidOut} (
+                  {counts.earnings.paidOutCount}) / App: $
+                  {counts.earnings.app.toFixed(2)}
                 </CardDescription>
               </div>
             </CardHeader>
             <CardContent>
-              <Button variant="secondary" className="w-full" onClick={() => handleCardClick('earnings')}>View Earnings</Button>
+              <Button
+                variant="secondary"
+                className="w-full"
+                onClick={() => handleCardClick("earnings")}
+              >
+                View Earnings
+              </Button>
             </CardContent>
           </Card>
         </div>
@@ -361,16 +478,20 @@ export default function AdminDashboard() {
             {active && renderCategoryCards()}
             {loading ? (
               <div className="text-center text-gray-500 py-12">Loading...</div>
-            ) : active === 'listings' ? (
+            ) : active === "listings" ? (
               <ListingsTable data={tableData} />
-            ) : active === 'bookings' ? (
+            ) : active === "bookings" ? (
               <BookingsTable data={tableData} />
-            ) : active === 'earnings' ? (
+            ) : active === "earnings" ? (
               <EarningsTable data={tableData} />
-            ) : active === 'users' ? (
-              <div className="text-center text-gray-500 py-12">User management coming soon.</div>
+            ) : active === "users" ? (
+              <div className="text-center text-gray-500 py-12">
+                User management coming soon.
+              </div>
             ) : (
-              <div className="text-center text-gray-400 py-12">Select a card to view data.</div>
+              <div className="text-center text-gray-400 py-12">
+                Select a card to view data.
+              </div>
             )}
           </div>
         </div>

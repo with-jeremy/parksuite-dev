@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useUser } from "@clerk/nextjs";
-import { useSupabaseClient } from "@/utils/supabase/client";
+import { db } from "@/utils/supabase/client";
 import { TablesInsert } from "@/types/supabase";
 import {
   Table,
@@ -22,14 +22,19 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/app/components/ui/dialog";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/app/components/ui/card";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+} from "@/app/components/ui/card";
 import { CreditCard, PiggyBank, CalendarCheck, Banknote } from "lucide-react";
 
 const TODAY = new Date(); // Use current date
 
 export default function EarningsPage() {
   const { isLoaded, isSignedIn, user } = useUser();
-  const { getSupabaseClient } = useSupabaseClient();
   const [bookings, setBookings] = useState<any[]>([]);
   const [payments, setPayments] = useState<Record<string, any>>({});
   const [loading, setLoading] = useState(true);
@@ -44,11 +49,8 @@ export default function EarningsPage() {
       try {
         setLoading(true);
 
-        // Get authenticated client with Clerk token
-        const supabase = await getSupabaseClient();
-
         // 1. Get all spots owned by user
-        const { data: spots, error: spotError } = await supabase
+        const { data: spots, error: spotError } = await db
           .from("parking_spots")
           .select("id, title")
           .eq("owner_id", user.id);
@@ -68,9 +70,11 @@ export default function EarningsPage() {
         const spotIds = spots.map((s: any) => s.id);
 
         // 2. Get all bookings for these spots
-        const { data: bookingsData, error: bookingsError } = await supabase
+        const { data: bookingsData, error: bookingsError } = await db
           .from("bookings")
-          .select("id, booking_date, price_per_day, service_fee, status, parking_spot_id, parking_spots(title)")
+          .select(
+            "id, booking_date, price_per_day, service_fee, status, parking_spot_id, parking_spots(title)"
+          )
           .in("parking_spot_id", spotIds)
           .order("booking_date", { ascending: true });
 
@@ -82,7 +86,10 @@ export default function EarningsPage() {
 
         const bookingsList = (bookingsData || []).map((b: any) => ({
           ...b,
-          spot: b.parking_spots || spots.find((s: any) => s.id === b.parking_spot_id) || {},
+          spot:
+            b.parking_spots ||
+            spots.find((s: any) => s.id === b.parking_spot_id) ||
+            {},
         }));
 
         setBookings(bookingsList);
@@ -91,7 +98,7 @@ export default function EarningsPage() {
         const bookingIds = bookingsList.map((b: any) => b.id);
 
         if (bookingIds.length > 0) {
-          const { data: paymentsData, error: paymentsError } = await supabase
+          const { data: paymentsData, error: paymentsError } = await db
             .from("earnings_payments")
             .select("id, booking_id, status")
             .in("booking_id", bookingIds)
@@ -109,13 +116,15 @@ export default function EarningsPage() {
 
         setLoading(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "An unknown error occurred");
+        setError(
+          err instanceof Error ? err.message : "An unknown error occurred"
+        );
         setLoading(false);
       }
     }
 
     fetchData();
-  }, [isLoaded, isSignedIn, user, getSupabaseClient]);
+  }, [isLoaded, isSignedIn, user]);
 
   const handleWithdraw = (booking: any) => {
     setModalBooking(booking);
@@ -127,11 +136,9 @@ export default function EarningsPage() {
     try {
       setWithdrawingId(modalBooking.id);
 
-      // Get authenticated client
-      const supabase = await getSupabaseClient();
-
       // Simulate payment confirmation and create earnings_payment record
-      const earnings = (modalBooking.price_per_day || 0) - (modalBooking.service_fee || 0);
+      const earnings =
+        (modalBooking.price_per_day || 0) - (modalBooking.service_fee || 0);
       const payment: TablesInsert<"earnings_payments"> = {
         amount: earnings,
         booking_id: modalBooking.id,
@@ -139,15 +146,22 @@ export default function EarningsPage() {
         status: "completed",
       };
 
-      const { error: insertError } = await supabase.from("earnings_payments").insert([payment]);
+      const { error: insertError } = await db
+        .from("earnings_payments")
+        .insert([payment]);
 
       if (!insertError) {
-        setPayments((prev) => ({ ...prev, [modalBooking.id]: { ...payment, status: "completed" } }));
+        setPayments((prev) => ({
+          ...prev,
+          [modalBooking.id]: { ...payment, status: "completed" },
+        }));
       } else {
         setError(insertError.message);
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to process withdrawal");
+      setError(
+        err instanceof Error ? err.message : "Failed to process withdrawal"
+      );
     } finally {
       setWithdrawingId(null);
       setModalBooking(null);
@@ -182,29 +196,41 @@ export default function EarningsPage() {
 
   return (
     <div className="p-5 min-h-screen flex flex-col items-center">
-      <h1 className="text-3xl font-bold mb-5">Earnings from Your Spot Bookings</h1>
+      <h1 className="text-3xl font-bold mb-5">
+        Earnings from Your Spot Bookings
+      </h1>
       {/* --- Earnings Summary Cards Row --- */}
       <div className="grid gap-6 mb-8 w-full max-w-7xl grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
+        {/* Available Earnings */}
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">
+              Available Earnings
+            </CardTitle>
+            <PiggyBank className="h-5 w-5 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              ${availableTotal.toFixed(2)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              {availableCount} available
+            </p>
+          </CardContent>
+        </Card>
         {/* Pending Earnings */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Pending Earnings</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Pending Earnings
+            </CardTitle>
             <CalendarCheck className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">${pendingTotal.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">{pendingCount} pending</p>
-          </CardContent>
-        </Card>
-        {/* Available Earnings */}
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Available Earnings</CardTitle>
-            <PiggyBank className="h-5 w-5 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">${availableTotal.toFixed(2)}</div>
-            <p className="text-xs text-muted-foreground">{availableCount} available</p>
+            <p className="text-xs text-muted-foreground">
+              {pendingCount} pending
+            </p>
           </CardContent>
         </Card>
         {/* Paid Earnings */}
@@ -221,11 +247,15 @@ export default function EarningsPage() {
         {/* Payment Methods */}
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Payment Methods</CardTitle>
+            <CardTitle className="text-sm font-medium">
+              Payment Methods
+            </CardTitle>
             <CreditCard className="h-5 w-5 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-base font-semibold mb-2">Your Account Name</div>
+            <div className="text-base font-semibold mb-2">
+              Your Account Name
+            </div>
             <Button asChild variant="outline" size="sm" className="w-full">
               <a href="#">Edit Payment Methods</a>
             </Button>
@@ -233,15 +263,22 @@ export default function EarningsPage() {
         </Card>
       </div>
       {/* Table aligned to columns 2-4 */}
-      <div className="grid w-full max-w-7xl" style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}>
+      <div
+        className="grid w-full max-w-7xl"
+        style={{ gridTemplateColumns: "repeat(4, minmax(0, 1fr))" }}
+      >
         <div />
         <div className="col-span-3">
           <div className="rounded-lg bg-white shadow border overflow-x-auto">
             {error && <div className="text-red-500 mb-4 p-4">{error}</div>}
             {loading ? (
-              <div className="text-gray-700 p-6 text-center">Loading earnings...</div>
+              <div className="text-gray-700 p-6 text-center">
+                Loading earnings...
+              </div>
             ) : bookings.length === 0 ? (
-              <div className="text-gray-700 p-6 text-center font-medium">No bookings found for your spots.</div>
+              <div className="text-gray-700 p-6 text-center font-medium">
+                No bookings found for your spots.
+              </div>
             ) : (
               <div className="min-w-[600px] md:min-w-0">
                 <Table className="text-sm md:text-base">
@@ -260,16 +297,28 @@ export default function EarningsPage() {
                     {bookings.map((booking) => {
                       const bookingDate = new Date(booking.booking_date);
                       const canWithdraw = TODAY > bookingDate;
-                      const earnings = (booking.price_per_day || 0) - (booking.service_fee || 0);
+                      const earnings =
+                        (booking.price_per_day || 0) -
+                        (booking.service_fee || 0);
                       const paid = payments[booking.id]?.status === "completed";
                       return (
                         <TableRow key={booking.id}>
-                          <TableCell>{bookingDate.toLocaleDateString()}</TableCell>
-                          <TableCell>{booking.spot?.title || "(Untitled)"}</TableCell>
-                          <TableCell>${booking.price_per_day?.toFixed(2)}</TableCell>
-                          <TableCell>${booking.service_fee?.toFixed(2)}</TableCell>
                           <TableCell>
-                            <span className="font-semibold">${earnings.toFixed(2)}</span>
+                            {bookingDate.toLocaleDateString()}
+                          </TableCell>
+                          <TableCell>
+                            {booking.spot?.title || "(Untitled)"}
+                          </TableCell>
+                          <TableCell>
+                            ${booking.price_per_day?.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            ${booking.service_fee?.toFixed(2)}
+                          </TableCell>
+                          <TableCell>
+                            <span className="font-semibold">
+                              ${earnings.toFixed(2)}
+                            </span>
                           </TableCell>
                           <TableCell>
                             {paid ? (
@@ -279,10 +328,14 @@ export default function EarningsPage() {
                             ) : (
                               <Button
                                 size="sm"
-                                disabled={!canWithdraw || withdrawingId === booking.id}
+                                disabled={
+                                  !canWithdraw || withdrawingId === booking.id
+                                }
                                 onClick={() => handleWithdraw(booking)}
                               >
-                                {withdrawingId === booking.id ? "Transferring..." : "Withdraw Earnings"}
+                                {withdrawingId === booking.id
+                                  ? "Transferring..."
+                                  : "Withdraw Earnings"}
                               </Button>
                             )}
                           </TableCell>
@@ -299,14 +352,25 @@ export default function EarningsPage() {
       <Dialog open={!!modalBooking} onOpenChange={() => setModalBooking(null)}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Transfer funds to your default account 'Fake Account Name' now?</DialogTitle>
+            <DialogTitle>
+              Transfer funds to your default account 'Fake Account Name' now?
+            </DialogTitle>
           </DialogHeader>
           <DialogFooter>
-            <Button variant="secondary" onClick={() => setModalBooking(null)} disabled={withdrawingId === modalBooking?.id}>
+            <Button
+              variant="secondary"
+              onClick={() => setModalBooking(null)}
+              disabled={withdrawingId === modalBooking?.id}
+            >
               Cancel
             </Button>
-            <Button onClick={confirmWithdraw} disabled={withdrawingId === modalBooking?.id}>
-              {withdrawingId === modalBooking?.id ? "Transferring..." : "Confirm"}
+            <Button
+              onClick={confirmWithdraw}
+              disabled={withdrawingId === modalBooking?.id}
+            >
+              {withdrawingId === modalBooking?.id
+                ? "Transferring..."
+                : "Confirm"}
             </Button>
           </DialogFooter>
         </DialogContent>
