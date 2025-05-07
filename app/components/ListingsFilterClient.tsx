@@ -26,6 +26,8 @@ export default function ListingsFilterClient({
   amenities,
   amenitiesLoading,
   amenitiesError,
+  view, // receive view from parent
+  setView, // receive setView from parent
 }) {
   // Local state for search input
   const [inputValue, setInputValue] = useState(search || "");
@@ -87,7 +89,7 @@ export default function ListingsFilterClient({
 
   // Slim, horizontal, 3-column layout
   return (
-    <div className="w-full max-w-7xl rounded shadow flex flex-col md:flex-row md:items-end gap-2 md:gap-4 px-2 py-2 md:py-0 sticky top-0 z-20 bg-transparent backdrop-blur-md">
+    <div className="w-full max-w-7xl rounded shadow flex flex-col md:flex-row md:items-end gap-2 md:gap-4 px-2 py-2 sticky top-0 z-20 bg-transparent backdrop-blur-md">
       {/* Search Column */}
       <div className="flex-1 min-w-[220px] md:pr-2">
         <input
@@ -124,13 +126,60 @@ export default function ListingsFilterClient({
         {locationError && (
           <div className="text-xs text-red-500 mt-1">{locationError}</div>
         )}
-        <button
-          className="mt-2 text-xs underline text-primary"
-          type="button"
-          onClick={() => setShowAdvanced((prev) => !prev)}
-        >
-          {showAdvanced ? "Hide Advanced Search" : "Show Advanced Search"}
-        </button>
+        <div className="mt-2 flex flex-row items-center justify-between">
+          <button
+            className="text-xs underline text-primary"
+            type="button"
+            onClick={() => setShowAdvanced((prev) => !prev)}
+          >
+            {showAdvanced ? "Hide Advanced Search" : "Show Advanced Search"}
+          </button>
+          {/* View Selector */}
+          <div className="flex flex-row gap-1 items-center ml-auto">
+            <button
+              type="button"
+              className={`p-1 rounded ${
+                view === "grid"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+              aria-label="Grid view"
+              onClick={() => setView("grid")}
+            >
+              <span role="img" aria-label="Grid">
+                🔲
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`p-1 rounded ${
+                view === "list"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+              aria-label="List view"
+              onClick={() => setView("list")}
+            >
+              <span role="img" aria-label="List">
+                📋
+              </span>
+            </button>
+            <button
+              type="button"
+              className={`p-1 rounded ${
+                view === "map"
+                  ? "bg-primary text-white"
+                  : "bg-gray-100 text-gray-700"
+              }`}
+              aria-label="Map view"
+              onClick={() => setView("map")}
+            >
+              <span role="img" aria-label="Map">
+                🗺️
+              </span>
+            </button>
+          </div>
+        </div>
       </div>
       {/* Advanced Search (Collapsible) */}
       {showAdvanced && (

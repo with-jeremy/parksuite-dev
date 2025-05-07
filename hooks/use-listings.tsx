@@ -6,6 +6,30 @@ let cachedAmenities: any[] | null = null;
 let amenitiesCacheTime = 0;
 const AMENITIES_CACHE_DURATION = 1000 * 60 * 60; // 1 hour
 
+// Geocode an address using Google Maps API
+export async function geocodeAddress(
+  address: string,
+  city: string,
+  state: string
+) {
+  const fullAddress = [address, city, state].filter(Boolean).join(", ");
+  const key =
+    (typeof process !== "undefined" &&
+      process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY) ||
+    (typeof window !== "undefined" && (window as any).GOOGLE_MAPS_API_KEY);
+  if (!key) throw new Error("Google Maps API key not found");
+  const url = `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(
+    fullAddress
+  )}&key=${key}`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data.status === "OK" && data.results[0]) {
+    const { lat, lng } = data.results[0].geometry.location;
+    return { lat, long: lng };
+  }
+  return null;
+}
+
 export function useListings(initialSearch: string) {
   const [search, setSearch] = useState(initialSearch);
   const [selectedTypes, setSelectedTypes] = useState<string[]>([]);

@@ -1,15 +1,18 @@
 "use client";
 import ListingsCard from "@/app/components/ListingsCard";
 import ListingsFilterClient from "../components/ListingsFilterClient";
-import { Suspense } from "react";
-
+import { Suspense, useState } from "react";
 import { useListings } from "@/hooks/use-listings";
 import { useSearchParams } from "next/navigation";
 import { useEffect } from "react";
+import MapsUi from "../components/MapsUi";
+import ListView from "../components/ListView";
 
 function ListingsPageContent() {
   const searchParams = useSearchParams();
   const searchParamValue = searchParams.get("search") || "";
+
+  const [view, setView] = useState("grid");
 
   const {
     search,
@@ -46,13 +49,10 @@ function ListingsPageContent() {
   }
 
   return (
-    <section
-      id="how-it-works"
-      className="w-full py-16 md:py-24 px-4 bg-slate-50"
-    >
-      <div className="container mx-auto max-w-7xl text-center">
-        <div className="flex flex-col max-w-7xl m-auto px-8 md:px-6 space-y-8 items-start">
-          <div className="flex flex-col space-y-4 text-left">
+    <section id="how-it-works" className="w-full py-16 md:py-24 bg-slate-50">
+      <div className="text-center">
+        <div className="flex flex-col m-auto space-y-8 items-start">
+          <div className="flex flex-col max-w-7xl m-auto space-y-4 text-left">
             <div className="space-y-2">
               <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none text-gray-900 dark:text-white">
                 Find Your Perfect Parking Spot
@@ -61,7 +61,7 @@ function ListingsPageContent() {
                 Discover a variety of parking options tailored to your needs.
               </p>
             </div>
-            <div className="block mb-4 sticky top-0 z-50 bg-white dark:bg-gray-900 shadow-md rounded-lg p-4">
+            <div className="block mb-4 sticky top-0 z-50 p-4">
               <ListingsFilterClient
                 search={search}
                 setSearch={setSearch}
@@ -78,19 +78,22 @@ function ListingsPageContent() {
                 amenities={amenities}
                 amenitiesLoading={amenitiesLoading}
                 amenitiesError={amenitiesError}
+                view={view}
+                setView={setView}
               />
             </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {spots.length === 0 && (
-                <div className="col-span-full text-center text-muted-foreground py-12">
-                  No spots found matching your criteria.
-                </div>
-              )}
+          </div>
+          {view === "map" ? (
+            <MapsUi spots={spots} />
+          ) : view === "list" ? (
+            <ListView spots={spots} />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 w-full max-w-7xl m-auto">
               {spots.map((spot) => (
-                <ListingsCard key={spot.id} spot={spot} isList={true} />
+                <ListingsCard isList={true} key={spot.id} spot={spot} />
               ))}
             </div>
-          </div>
+          )}
         </div>
       </div>
     </section>
