@@ -3,7 +3,11 @@ import { db } from "@/utils/supabase/client";
 import BookingsCard from "@/app/components/BookingsCard";
 import { Database } from "@/types/supabase";
 
-export default async function RentedBookingsDetail({ params }) {
+export default async function RentedBookingsDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   // Fetch booking details by id with nested parking_spot and related fields

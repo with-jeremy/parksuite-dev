@@ -3,7 +3,11 @@ import BookingsCard from "@/app/components/BookingsCard";
 import { Database } from "@/types/supabase";
 import Link from "next/link";
 
-export default async function HostedBookingsDetail({ params }) {
+export default async function HostedBookingsDetail({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
   const { id } = await params;
 
   // Fetch parking spot details

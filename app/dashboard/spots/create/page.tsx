@@ -8,8 +8,6 @@ import { db } from '@/utils/supabase/client';
 import { TablesInsert } from "@/types/supabase";
 import Image from "next/image";
 
-const PARKING_TYPES = ["driveway", "garage", "lot", "street"];
-
 type SpotInsert = TablesInsert<"parking_spots">;
 
 export default function CreateSpotForm() {
@@ -19,7 +17,6 @@ export default function CreateSpotForm() {
   const [state, setState] = useState("");
   const [zipCode, setZipCode] = useState("");
   const [description, setDescription] = useState("");
-  const [type, setType] = useState(PARKING_TYPES[0]);
   const [pricePerDay, setPricePerDay] = useState<number | null>(null);
   const [spacesAvailable, setSpacesAvailable] = useState<number | null>(null);
   const [isActive, setIsActive] = useState(true);
@@ -103,11 +100,11 @@ export default function CreateSpotForm() {
         state,
         zip_code: zipCode,
         description: description || null,
-        type,
         price_per_day: pricePerDay || 0,
         spaces_available: spacesAvailable,
         is_active: isActive,
         owner_id: user.id,
+        type: "driveway",
       };
       const { data: spotData, error: insertError } = await db.from("parking_spots").insert([newSpot]).select("id").single();
       if (insertError || !spotData) throw new Error(insertError?.message || "Failed to create spot");
@@ -171,14 +168,6 @@ export default function CreateSpotForm() {
         <label className="block mb-1 text-white">Description</label>
         <textarea className="w-full p-2 border rounded text-black" value={description} onChange={e => setDescription(e.target.value)} />
       </div>
-      <div>
-        <label className="block mb-1 text-white">Type</label>
-        <select className="w-full p-2 border rounded text-black" value={type} onChange={e => setType(e.target.value)}>
-          {PARKING_TYPES.map((t) => (
-            <option key={t} value={t}>{t.charAt(0).toUpperCase() + t.slice(1)}</option>
-          ))}
-        </select>
-      </div>
       <div className="flex gap-4">
         <div className="flex-1">
           <label className="block mb-1 text-white">Price Per Day ($)</label>
@@ -236,8 +225,8 @@ export default function CreateSpotForm() {
         </div>
       </div>
       <button type="submit" disabled={isLoading} className="w-full p-2 bg-blue-500 text-white rounded disabled:bg-blue-300">
-        {isLoading ? "Creating..." : "Create Spot"}
-      </button>
+        {isLoading ? "Creating..." : "Create Spot"
+      }</button>
     </form>
   );
 }

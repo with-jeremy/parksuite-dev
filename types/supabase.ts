@@ -330,6 +330,7 @@ export type Database = {
           id: string;
           instructions: string | null;
           is_active: boolean | null;
+          is_featured: boolean | null;
           lat: string | null;
           lng: string | null;
           owner_id: string | null;
@@ -348,6 +349,7 @@ export type Database = {
           id?: string;
           instructions?: string | null;
           is_active?: boolean | null;
+          is_featured?: boolean | null;
           lat?: string | null;
           lng?: string | null;
           owner_id?: string | null;
@@ -366,6 +368,7 @@ export type Database = {
           id?: string;
           instructions?: string | null;
           is_active?: boolean | null;
+          is_featured?: boolean | null;
           lat?: string | null;
           lng?: string | null;
           owner_id?: string | null;
@@ -528,7 +531,19 @@ export type Database = {
       [_ in never]: never;
     };
     Functions: {
-      [_ in never]: never;
+      find_nearest_parking_spots: {
+        Args: {
+          user_lat: number;
+          user_lng: number;
+          max_results: number;
+          max_distance_meters: number;
+        };
+        Returns: Array<{
+          id: string;
+          distance_meters: number;
+          // other fields your function returns
+        }>;
+      };
     };
     Enums: {
       booking_status: "pending" | "confirmed" | "cancelled" | "completed";

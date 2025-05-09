@@ -22,14 +22,23 @@ import {
 } from "@/app/components/ui/table";
 import { Users, Home, CalendarCheck, PiggyBank } from "lucide-react";
 import { db } from "@/utils/supabase/client";
+import FeaturedToggle from "@/app/components/admin/featured-toggle";
+import { toggleFeaturedSpot } from "@/app/actions/parking-spot-actions";
+
 
 // Table components for each card (stubbed, fetch on demand)
 function ListingsTable({ data }: { data: any[] }) {
+  const handleToggleFeatured = async (id: string, isFeatured: boolean) => {
+    await toggleFeaturedSpot(id, isFeatured);
+    // You may want to refresh the data after toggling
+  };
+
   return (
     <Table>
       <TableCaption>All Parking Listings</TableCaption>
       <TableHeader>
         <TableRow>
+          <TableHead>Featured</TableHead>
           <TableHead>User</TableHead>
           <TableHead>Spot Name</TableHead>
           <TableHead>Address</TableHead>
@@ -41,6 +50,13 @@ function ListingsTable({ data }: { data: any[] }) {
       <TableBody>
         {data.map((row) => (
           <TableRow key={row.id}>
+            <TableCell>
+              <FeaturedToggle
+                id={row.id}
+                isFeatured={row.is_featured}
+                onToggle={handleToggleFeatured}
+              />
+            </TableCell>
             <TableCell>{row.user_name || "-"}</TableCell>
             <TableCell>{row.title}</TableCell>
             <TableCell>{row.address}</TableCell>

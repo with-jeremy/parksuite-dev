@@ -1,4 +1,3 @@
-import { getServerDb } from "@/utils/supabase/server";
 import { Abel } from "next/font/google";
 import Image from "next/image";
 import Link from "next/link";
@@ -6,31 +5,16 @@ import ListingsCard from "@/app/components/ListingsCard";
 import { Button } from "@/app/components/ui/button";
 import { ButtonProps } from "@/app/components/ui/button";
 import HeroSearchForm from "./components/HeroSearchForm";
+import { parkingSpotRepository } from "@/lib/db";
 
 const abel = Abel({ weight: "400", subsets: ["latin"] });
 
 export default async function Home() {
-  // Get authenticated DB client
-  const db = await getServerDb();
 
-  // Fetch spots with their images (if any)
-  const { data: spots, error } = await db
-    .from("parking_spots")
-    .select(
-      "*, parking_spot_images(image_url, is_primary), parking_spot_amenities(amenities(name))"
-    )
-    .order("created_at", { ascending: false })
-    .eq("is_active", true)
-    .limit(4);
-
-  if (error) {
-    return (
-      <div className="p-8">Error loading parking spots: {error.message}</div>
-    );
-  }
+  const spots = await parkingSpotRepository.getFeatured();
 
   if (!spots) {
-    return <div className="p-8">Loading...</div>;
+    return <div className="p-8">Loading..</div>;
   }
 
   return (
@@ -79,7 +63,7 @@ export default async function Home() {
       </section>
       <section className="relative w-full py-8 md:py-12 lg:py-16 bg-gradient-to-b from-blue-50 via-gray-50 to-gray-100">
         <div className="container mx-auto  px-4 py-8">
-          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl mb-8 text-blue-900 drop-shadow-sm">
+          <h2 className="text-3xl font-bold sm:text-4xl md:text-5xl mb-8 text-black drop-shadow-sm">
             Available Parking
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">

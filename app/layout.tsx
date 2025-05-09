@@ -29,7 +29,7 @@ export default function RootLayout({
         <body
           className={`${abel.className} bg-background text-foreground antialiased`}
         >
-          <header className="sticky top-0 z-40 bg-background border-b border-blood py-2">
+          <header className="sticky top-0 z-40 bg-background border-b border-primary shadow-sm">
             {/* Responsive nav container */}
             <nav className="max-w-7xl mx-auto w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0 pr-4">
               {/* Logo + Auth row (mobile: both, sm+: only logo) */}

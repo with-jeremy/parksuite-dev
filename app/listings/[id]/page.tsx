@@ -1,5 +1,4 @@
-import { cookies } from "next/headers";
-import { db } from "@/utils/supabase/client";
+import { parkingSpotRepository } from "@/lib/db";
 import ListingsCard from "@/app/components/ListingsCard";
 import Link from "next/link";
 
@@ -9,25 +8,16 @@ export default async function ParkingSpotDetail({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
+  const spot = await parkingSpotRepository.getById(id);
 
-  // Fetch parking spot details, images, and amenities in one query
-  const { data: spot, error: spotError } = await db
-    .from("parking_spots")
-    .select(
-      "*, parking_spot_images(image_url, is_primary), parking_spot_amenities(amenities(name))"
-    )
-    .eq("id", id)
-    .single();
-
-  if (spotError || !spot) {
+  if (!spot) {
     return (
       <div className="p-4 text-red-500">
-        Error fetching parking spot: {spotError?.message || "Not found"}
+        Error fetching parking spot: Not found
       </div>
     );
   }
 
-  // Standardized breadcrumb placement and styling
   return (
     <div className="flex flex-col max-w-xl mx-auto items-center justify-center my-4 px-6">
       <nav className="w-full text-sm mb-4" aria-label="Breadcrumb">
