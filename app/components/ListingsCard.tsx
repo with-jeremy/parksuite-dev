@@ -6,7 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { Dialog, DialogContent } from "./ui/dialog";
 import Link from "next/link";
 import { useUser } from "@clerk/nextjs";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Card, CardContent } from "./ui/card";
 import { Badge } from "./ui/badge";
 import { MapPin } from "lucide-react";
@@ -21,8 +21,9 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, isList }) => {
   const [uiMessage, setUiMessage] = useState<string | null>(null);
   const [zoomOpen, setZoomOpen] = useState(false);
   const [zoomIdx, setZoomIdx] = useState(0);
-  const { isSignedIn, user } = useUser();
+  const { isSignedIn } = useUser();
   const router = useRouter();
+  const pathname = usePathname();
 
   // Use images from spot.parking_spot_images
   const images = Array.isArray(spot.parking_spot_images)
@@ -120,7 +121,7 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, isList }) => {
           )}
         </div>
       )}
-      <CardContent className="p-4">
+      <CardContent className="p-4 bg-white">
         <div className="flex items-center justify-between">
           <h3 className="font-semibold text-lg truncate">{spot.title}</h3>
         </div>
@@ -244,7 +245,14 @@ const ListingsCard: React.FC<ListingsCardProps> = ({ spot, isList }) => {
 
   // Only wrap in Link if isList, otherwise render card directly
   return isList ? (
-    <Link href={`/listings/${spot.id}`} className="group block">
+    <Link
+      href={
+        pathname?.includes("dashboard/spots")
+          ? `/dashboard/spots/${spot.id}`
+          : `/listings/${spot.id}`
+      }
+      className="group block"
+    >
       {cardContent}
     </Link>
   ) : (

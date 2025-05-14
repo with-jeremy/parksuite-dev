@@ -10,14 +10,27 @@
   --foreground: #000;
 }
 
-@media {
+@media (prefers-color-scheme: dark) {
   :root {
-    --background: #fff;
-    --foreground: #000;
+    --background: #000;
+    --foreground: #fff;
     --primary: #f5576c;  /* Added primary color variable */
     --white: #fff;       /* Added white color variable */
     --black: #000;       /* Added black color variable */
   }
+}
+
+@keyframes slide-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out forwards;
 }
 
 body {

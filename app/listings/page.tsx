@@ -7,9 +7,7 @@ import { parkingSpotRepository } from "@/lib/db/repositories/parking-spots";
 // Revalidate amenities once per day
 export const revalidate = 86400;
 
-export default async function ListingsPage({ searchParams }: { searchParams: Promise<{ id: string }>; }) {
-  // Get search params from URL
-  const search = await searchParams || '';
+export default async function ListingsPage() {
   
   // Fetch amenities (cached)
   const amenities = await getAmenities();
@@ -24,7 +22,6 @@ export default async function ListingsPage({ searchParams }: { searchParams: Pro
       <Suspense fallback={<LoadingSpinner />}>
         <ListingsClientWrapper 
           amenities={amenities} 
-          initialSearch={search} 
           spots={spots} 
         />
       </Suspense>

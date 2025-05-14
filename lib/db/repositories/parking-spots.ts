@@ -7,6 +7,26 @@ export type ParkingSpot = Database["public"]["Tables"]["parking_spots"]["Row"] &
 };
 
 export const parkingSpotRepository = {
+
+  async getActive(limit = 12): Promise<ParkingSpot[]> {
+    const db = await getServerDb();
+    const { data, error } = await db
+      .from("parking_spots")
+      .select(
+        "*, parking_spot_images(image_url, is_primary), parking_spot_amenities(amenities(name, id))"
+      )
+      .eq("is_active", true)
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) {
+      console.error("Error fetching parking spots:", error.message);
+      return [];
+    }
+
+    return data as ParkingSpot[];
+  },
+
   async getById(id: string): Promise<ParkingSpot | null> {
     const db = await getServerDb();
     const { data, error } = await db
@@ -25,19 +45,18 @@ export const parkingSpotRepository = {
     return data as ParkingSpot;
   },
 
-  async getActive(limit = 12): Promise<ParkingSpot[]> {
+   async getByOwnerId(ownerId: string): Promise<ParkingSpot[]> {
     const db = await getServerDb();
     const { data, error } = await db
       .from("parking_spots")
       .select(
-        "*, parking_spot_images(image_url, is_primary), parking_spot_amenities(amenities(name, id))"
+        "*, parking_spot_images(image_url, is_primary), parking_spot_amenities(amenities(name))"
       )
-      .eq("is_active", true)
-      .order("created_at", { ascending: false })
-      .limit(limit);
+      .eq("owner_id", ownerId)
+      .order("created_at", { ascending: false });
 
     if (error) {
-      console.error("Error fetching parking spots:", error.message);
+      console.error("Error fetching owner's parking spots:", error.message);
       return [];
     }
 
