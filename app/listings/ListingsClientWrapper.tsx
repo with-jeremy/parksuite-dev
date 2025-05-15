@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useSearchParams } from 'next/navigation';
 import ListingsFilter from "@/app/components/ListingsFilter";
 import ListingsCard from "@/app/components/ListingsCard";
 import MapsUi from "@/app/components/MapsUi";
 import { getGeneralLocation } from "@/lib/maps/geolocation";
-import { APIProvider } from '@vis.gl/react-google-maps'; // Import APIProvider
 import { findNearestSpots } from "../actions/find-nearest-spots";
 
 export default function ListingsClientWrapper({ 
@@ -18,6 +18,8 @@ export default function ListingsClientWrapper({
   const [generalLocation, setGeneralLocation] = useState<{lat: number, lng: number} | null>(null); 
   const [view, setView] = useState("list");
   const [filteredSpots, setFilteredSpots] = useState([]);
+
+  const searchParams = useSearchParams();
 
   // Get general location on component mount if no location exists
   useEffect(() => {
@@ -45,6 +47,22 @@ export default function ListingsClientWrapper({
     setGeneralLocationIfNeeded();
   }, [generalLocation]);
   
+  // Get location from URL params if available
+  useEffect(() => {
+    const latParam = searchParams.get('lat');
+    const lngParam = searchParams.get('lng');
+    
+    if (latParam && lngParam) {
+      const lat = parseFloat(latParam);
+      const lng = parseFloat(lngParam);
+      
+      if (!isNaN(lat) && !isNaN(lng)) {
+        setLocation({ lat, lng });
+        // This will trigger the existing useEffect that watches location changes
+      }
+    }
+  }, [searchParams]);
+
   // Filter the spots based on selected amenities
   useEffect(() => {
     const filtered = spots.filter(spot => {
@@ -95,15 +113,8 @@ export default function ListingsClientWrapper({
     setView("list");
   };
 
-  const GOOGLE_MAPS_API_KEY = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-
-  if (!GOOGLE_MAPS_API_KEY) {
-    console.error("Google Maps API Key is not configured. Please set NEXT_PUBLIC_GOOGLE_MAPS_API_KEY.");
-    // Optionally render a message to the user or a fallback UI
-  }
-
   return (
-    <APIProvider apiKey={GOOGLE_MAPS_API_KEY || ""}>
+    <>
       <ListingsFilter
         selectedAmenities={selectedAmenities}
         setSelectedAmenities={setSelectedAmenities}
@@ -131,6 +142,6 @@ export default function ListingsClientWrapper({
           onClose={handleCloseMap} 
         />
       )}
-    </APIProvider>
+    </>
   );
 }

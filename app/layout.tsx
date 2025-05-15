@@ -2,7 +2,6 @@ import { Abel } from "next/font/google";
 import Image from "next/image";
 import Footer from "@/app/components/Footer";
 import { ClerkProvider, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-
 import Link from "next/link";
 import "./globals.css";
 
@@ -12,6 +11,7 @@ const navLinks = [
   { href: "/listings", label: "Find Parking" },
   { href: "/host", label: "Become a Host" },
 ];
+
 
 export const metadata = {
   title: "ParkSuite",

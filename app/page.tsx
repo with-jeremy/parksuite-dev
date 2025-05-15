@@ -6,6 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { ButtonProps } from "@/app/components/ui/button";
 import HeroSearchForm from "./components/HeroSearchForm";
 import { parkingSpotRepository } from "@/lib/db";
+import GoogleMapsProvider from "@/app/components/GoogleMapsProvider";
 
 const abel = Abel({ weight: "400", subsets: ["latin"] });
 
@@ -18,7 +19,7 @@ export default async function Home() {
   }
 
   return (
-    <>
+    <GoogleMapsProvider>
       <section className="relative w-full h-screen overflow-hidden">
         <div className="absolute inset-0 z-0">
           <Image
@@ -129,6 +130,6 @@ export default async function Home() {
           </div>
         </div>
       </section>
-    </>
+    </GoogleMapsProvider>
   );
 }
