@@ -34,7 +34,7 @@ export default function RootLayout({
             <nav className="max-w-7xl mx-auto w-full flex flex-col sm:flex-row sm:items-center sm:justify-between gap-0 pr-4">
               {/* Logo + Auth row (mobile: both, sm+: only logo) */}
               <div className="w-full flex justify-between items-center">
-                <Link href="/" className="block w-auto">
+                <Link href="/" className="w-auto max-w-60 flex-shrink-0 flex items-center p-2">
                   <Image
                     src="/images/logo.png"
                     alt="ParkSuite"
